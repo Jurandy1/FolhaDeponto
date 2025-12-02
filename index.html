@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -33,9 +33,10 @@
         .borda-r { border-right: 1px solid #000 !important; }
 
         @media print {
-            .no-print { display: none !important; }
+            header, footer, #content, .no-print { display: none !important; }
             body { margin: 0; padding: 0; background: #ffffff !important; }
-            .paper { margin: 0; width: 210mm !important; height: 297mm !important; padding: 10mm !important; box-shadow: none !important; }
+            #ponto-container { display: block !important; }
+            .paper { margin: 0; width: 210mm !important; height: 297mm !important; padding: 10mm !important; box-shadow: none !important; page-break-after: always; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .paper th, .paper td { border: 0.6pt solid #000 !important; background: #ffffff !important; }
         }
@@ -51,10 +52,10 @@
                 
                 <!-- Logo e Título -->
                 <div class="flex items-center space-x-3">
-                    <img src="https://placehold.co/40x40/ffffff/007bff?text=SLZ" 
-                         alt="Logo da Prefeitura de São Luís"
-                         class="h-10 w-10 rounded-full border border-white p-1"
-                         onerror="this.onerror=null; this.src='https://placehold.co/40x40/cccccc/333333?text=SLZ'"
+                    <img src="https://www.saoluis.ma.gov.br/img/logo_mobile.png?1738946184"
+                         alt="Prefeitura de São Luís"
+                         class="h-10 w-auto object-contain bg-white/10 rounded-md p-1"
+                         onerror="this.onerror=null; this.src='https://placehold.co/120x40/cccccc/333333?text=SAO+LUIS'"
                     >
                     <h1 class="text-xl font-bold">Portal RH | SEMCAS - São Luís</h1>
                 </div>
@@ -71,6 +72,7 @@
                             </ul>
                         </li>
                         <li><a href="#processos" class="nav-link p-2 rounded-md hover:bg-blue-600 transition" data-view="processos">Processos (SEI)</a></li>
+                        <li><a href="#noticias" class="nav-link p-2 rounded-md hover:bg-blue-600 transition" data-view="noticias">Notícias</a></li>
                         <li><a href="#documentacao" class="nav-link p-2 rounded-md hover:bg-blue-600 transition" data-view="documentacao">Documentação</a></li>
                     </ul>
                 </nav>
@@ -85,7 +87,7 @@
         </main>
 
         <!-- RODAPÉ (Opcional) -->
-        <footer class="bg-gray-100 text-center py-4 text-xs text-gray-500 mt-auto">
+        <footer class="bg-gray-50 border-t border-gray-200 text-center py-4 text-xs text-gray-600 mt-auto">
             © 2025 SEMCAS - Secretaria Municipal da Criança e Assistência Social. Desenvolvido para RH.
         </footer>
 
@@ -258,6 +260,7 @@
             feriadosMap: new Map(), // feriados do texto importado
             feriadosMapUI: new Map(), // feriados adicionados pela UI
             mockProcesses: [],
+            noticias: [], // itens de notícias/avisos
         };
 
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjyCxbgnAsHpVZsAzU_VzGi7D-TXnaPciKUWudnp5thY6N53R8laj-aWB8IF_pQPCTevKdOro8rGAM/pub?output=csv';
@@ -275,6 +278,49 @@
             catalogoFeriadosMes: 'catalogoFeriadosMes', pfDiaSelect: 'pfDiaSelect', pfNomeInput: 'pfNomeInput',
             adicionarPFBtn: 'adicionarPFBtn',
         };
+
+        // ====================================================================
+        // NOTÍCIAS: Persistência e helpers
+        // ====================================================================
+        const NOTICIAS_STORAGE_KEY = 'portal_semcas_noticias';
+        function loadNoticias() {
+            try {
+                const raw = localStorage.getItem(NOTICIAS_STORAGE_KEY);
+                const arr = raw ? JSON.parse(raw) : [];
+                appState.noticias = Array.isArray(arr) ? arr : [];
+            } catch (e) {
+                appState.noticias = [];
+            }
+        }
+        function saveNoticias() {
+            try {
+                localStorage.setItem(NOTICIAS_STORAGE_KEY, JSON.stringify(appState.noticias));
+            } catch (e) {
+                // Silencia erros de quota; usuário mantém dados atuais em memória
+            }
+        }
+        function addNoticia({ type, title, content, showOnHome }) {
+            const item = {
+                id: 'n' + Date.now() + Math.random().toString(36).slice(2,7),
+                type: String(type || 'Comunicado'),
+                title: String(title || '').trim(),
+                content: String(content || '').trim(),
+                showOnHome: !!showOnHome,
+                createdAt: Date.now(),
+            };
+            appState.noticias.unshift(item);
+            saveNoticias();
+            return item;
+        }
+        function deleteNoticia(id) {
+            appState.noticias = appState.noticias.filter(n => n.id !== id);
+            saveNoticias();
+        }
+        function toggleNoticiaHome(id) {
+            const n = appState.noticias.find(n => n.id === id);
+            if (n) { n.showOnHome = !n.showOnHome; saveNoticias(); }
+            return n;
+        }
 
         // ====================================================================
         // FUNÇÕES UTILITÁRIAS
@@ -481,6 +527,9 @@
                 case 'processos':
                     renderProcessosView(content);
                     break;
+                case 'noticias':
+                    renderNoticiasView(content);
+                    break;
                 case 'documentacao':
                     renderDocumentacaoView(content);
                     break;
@@ -496,105 +545,351 @@
 
         function renderHomeView(container) {
             container.innerHTML = `
-                <div class="text-center py-16 bg-blue-50 rounded-xl shadow-inner">
-                    <h2 class="text-4xl font-extrabold text-blue-800">Bem-vindo(a) ao Portal RH SEMCAS</h2>
-                    <p class="mt-4 text-lg text-gray-600">Seu centro de gestão de pessoas e processos.</p>
-                    <div class="mt-8 flex justify-center space-x-4">
-                        <a href="#ferias" class="bg-semcas text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:bg-blue-600 transition" data-view="ferias" onclick="showView('ferias')">
-                            <i class="fas fa-umbrella-beach mr-2"></i> Ver Férias
-                        </a>
-                        <a href="#ponto" class="bg-green-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:bg-green-700 transition" data-view="ponto" onclick="showView('ponto')">
-                            <i class="fas fa-clock mr-2"></i> Gerar Folha de Ponto
-                        </a>
+                <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white border">
+                    <div class="absolute inset-0 opacity-15" style="background-image: radial-gradient(circle at 15% 15%, #ffffff 2px, transparent 2px), radial-gradient(circle at 85% 25%, #ffffff 2px, transparent 2px); background-size: 22px 22px;"></div>
+                    <div class="relative px-6 sm:px-10 py-12 sm:py-16">
+                        <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
+                            <div class="bg-white rounded-md p-2 shadow-sm">
+                                <img src="https://www.saoluis.ma.gov.br/img/logo_mobile.png" alt="Prefeitura de São Luís" class="h-16 w-auto object-contain opacity-100" style="filter: drop-shadow(0 1px 0 rgba(0,0,0,.1)) drop-shadow(0 2px 4px rgba(0,0,0,.18));" onerror="this.onerror=null; this.src='https://placehold.co/160x56/cccccc/333333?text=LOGO'">
+                            </div>
+                            <div class="text-center md:text-left">
+                                <div class="text-xs uppercase tracking-widest text-blue-200">Secretaria Municipal</div>
+                                <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Portal RH • Serviços ao Servidor</h2>
+                                <p class="mt-3 text-base sm:text-lg text-blue-100">Informações institucionais, férias, folha de ponto e processos SEI.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
+                            <a href="#ferias" class="inline-flex items-center bg-white/10 px-5 py-3 rounded font-semibold shadow hover:bg-white/20 transition" data-view="ferias" onclick="showView('ferias')">
+                                <i class="fas fa-umbrella-beach mr-2"></i>
+                                Férias
+                            </a>
+                            <a href="#ponto" class="inline-flex items-center bg-green-600 px-5 py-3 rounded font-semibold shadow hover:bg-green-700 transition" data-view="ponto" onclick="showView('ponto')">
+                                <i class="fas fa-clock mr-2"></i>
+                                Folha de Ponto
+                            </a>
+                            <a href="#processos" class="inline-flex items-center bg-white/10 px-5 py-3 rounded font-semibold shadow hover:bg-white/20 transition" data-view="processos" onclick="showView('processos')">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Processos SEI
+                            </a>
+                            <a href="#noticias" class="inline-flex items-center bg-white/10 px-5 py-3 rounded font-semibold shadow hover:bg-white/20 transition" data-view="noticias" onclick="showView('noticias')">
+                                <i class="fas fa-newspaper mr-2"></i>
+                                Notícias
+                            </a>
+                        </div>
+
+                        <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-white/10 rounded-lg p-4 text-center border border-white/10">
+                                <div class="text-2xl font-bold">Férias</div>
+                                <div class="text-sm text-blue-100">Acompanhe períodos aquisitivos</div>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-4 text-center border border-white/10">
+                                <div class="text-2xl font-bold">Ponto</div>
+                                <div class="text-sm text-blue-100">Gere folhas com feriados</div>
+                            </div>
+                            <div class="bg-white/10 rounded-lg p-4 text-center border border-white/10">
+                                <div class="text-2xl font-bold">Processos</div>
+                                <div class="text-sm text-blue-100">Registre andamento no SEI</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-bold text-gray-800">Informes Institucionais</h3>
+                        <a href="#noticias" data-view="noticias" onclick="showView('noticias')" class="text-blue-700 text-sm hover:underline">Gerenciar notícias</a>
+                    </div>
+                    <div id="home-news" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </section>
+            `;
+
+            // Renderiza dinamicamente as notícias marcadas para a Home
+            const homeNewsEl = container.querySelector('#home-news');
+            const items = (appState.noticias || []).filter(n => !!n.showOnHome)
+                .sort((a,b) => b.createdAt - a.createdAt).slice(0, 6);
+            if (!items.length) {
+                homeNewsEl.innerHTML = `<div class="bg-white border rounded-xl shadow-sm p-4 text-gray-600">Nenhuma notícia marcada para exibir na página inicial. Use o menu "Notícias" para cadastrar e marcar.</div>`;
+            } else {
+                homeNewsEl.innerHTML = items.map(n => `
+                    <article class="bg-white border rounded-xl shadow-sm p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs ${n.type === 'Comunicado' ? 'text-blue-700' : n.type === 'Informativo' ? 'text-green-700' : 'text-purple-700'} font-bold">${n.type}</div>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-600">Institucional</span>
+                        </div>
+                        ${n.title ? `<h4 class="mt-1 font-semibold text-gray-900">${n.title}</h4>` : ''}
+                        <p class="mt-1 text-sm text-gray-700">${n.content}</p>
+                        <div class="mt-2 text-xs text-gray-500">Atualizado em ${new Date(n.createdAt).toLocaleDateString('pt-BR')}</div>
+                    </article>
+                `).join('');
+            }
+        }
+
+        // View de Notícias com CRUD simples (localStorage)
+        function renderNoticiasView(container) {
+            const list = (appState.noticias || []).slice().sort((a,b) => b.createdAt - a.createdAt);
+            const options = ['Comunicado','Informativo','Boletim'];
+            const renderBadgeClass = (t) => t === 'Comunicado' ? 'bg-blue-100 text-blue-800' : t === 'Informativo' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800';
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">Notícias e Informações</h2>
+                <div class="bg-white border rounded-xl shadow-sm p-4 mb-4">
+                    <div class="font-semibold text-gray-700 mb-2">Nova notícia</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Categoria</label>
+                            <select id="noticiaType" class="w-full border rounded px-2 py-1">
+                                ${options.map(o => `<option value="${o}">${o}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Título</label>
+                            <input id="noticiaTitle" type="text" class="w-full border rounded px-2 py-1" placeholder="Ex.: Prazo para envio de férias">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs text-gray-600 mb-1">Conteúdo</label>
+                            <textarea id="noticiaContent" rows="3" class="w-full border rounded px-2 py-1" placeholder="Texto da notícia"></textarea>
+                        </div>
+                        <div class="flex items-center gap-2 sm:col-span-2">
+                            <input id="noticiaShowHome" type="checkbox" class="border rounded">
+                            <label for="noticiaShowHome" class="text-sm text-gray-700">Mostrar na página inicial</label>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button id="btnPublicarNoticia" class="bg-blue-600 text-white font-bold px-4 py-2 rounded hover:bg-blue-700">Publicar</button>
                     </div>
                 </div>
+                <div id="listaNoticias" class="space-y-3">
+                    ${list.length ? list.map(n => `
+                        <article class="bg-white border rounded-xl shadow-sm p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs px-2 py-1 rounded ${renderBadgeClass(n.type)}">${n.type}</span>
+                                    <span class="text-xs text-gray-500">${new Date(n.createdAt).toLocaleString('pt-BR')}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button class="text-sm ${n.showOnHome ? 'text-green-700' : 'text-gray-600'} hover:underline" data-toggle-home="${n.id}">${n.showOnHome ? 'Remover da Home' : 'Mostrar na Home'}</button>
+                                    <button class="text-sm text-red-700 hover:underline" data-del-noticia="${n.id}">Excluir</button>
+                                </div>
+                            </div>
+                            ${n.title ? `<h4 class="mt-1 font-semibold text-gray-900">${n.title}</h4>` : ''}
+                            <p class="mt-1 text-sm text-gray-700 whitespace-pre-wrap">${n.content}</p>
+                        </article>
+                    `).join('') : `<div class="text-gray-600">Nenhuma notícia cadastrada ainda.</div>`}
+                </div>
             `;
+
+            // Eventos
+            const btn = container.querySelector('#btnPublicarNoticia');
+            btn.addEventListener('click', () => {
+                const type = container.querySelector('#noticiaType').value;
+                const title = container.querySelector('#noticiaTitle').value;
+                const content = container.querySelector('#noticiaContent').value;
+                const showOnHome = container.querySelector('#noticiaShowHome').checked;
+                if (!title && !content) return; // requer pelo menos um dos dois
+                addNoticia({ type, title, content, showOnHome });
+                renderNoticiasView(container);
+            });
+            container.querySelectorAll('[data-del-noticia]').forEach(b => {
+                b.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-del-noticia');
+                    deleteNoticia(id);
+                    renderNoticiasView(container);
+                });
+            });
+            container.querySelectorAll('[data-toggle-home]').forEach(b => {
+                b.addEventListener('click', (e) => {
+                    const id = e.currentTarget.getAttribute('data-toggle-home');
+                    toggleNoticiaHome(id);
+                    renderNoticiasView(container);
+                });
+            });
         }
 
         function renderFeriasView(container) {
-            container.innerHTML = `<h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">Funcionários Próximos de Entrar de Férias</h2>`;
+            container.innerHTML = `<h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">Funcionários e Períodos de Férias</h2>`;
             if (!appState.registros.length) {
                 container.innerHTML += `<p class="text-gray-500">Carregando dados dos servidores...</p>`;
                 return;
             }
 
             const today = new Date();
-            const feriasList = appState.registros.map(r => {
+            const feriasData = appState.registros.map(r => {
                 const admissaoRaw = r['Admissão'] || r['Admissao'];
                 const admissaoBR = formatDateToBR(admissaoRaw);
-                const [dd, mm, yyyy] = admissaoBR.split('/').map(Number);
-                
+                const [dd, mm, yyyy] = (admissaoBR || '').split('/').map(Number);
                 if (isNaN(dd) || isNaN(mm) || isNaN(yyyy)) {
-                    return null;
+                    return {
+                        nome: r['Funcionário'] || r['Funcionario'] || 'N/A',
+                        cargo: r['Cargo Origem'] || r['Cargo'] || r['Função'] || r['Funcao'] || 'N/A',
+                        lotacao: r['Lotação'] || r['Lotacao'] || 'N/A',
+                        matricula: r['Matrícula'] || r['Matricula'] || 'N/A',
+                        admissao: admissaoBR || '',
+                        elegivelEm: '',
+                        diasFaltantes: NaN,
+                    };
                 }
-                
-                // Período aquisitivo (12 meses a partir da admissão)
                 const acquisitiveStart = new Date(yyyy, mm - 1, dd);
                 const acquisitiveEnd = new Date(acquisitiveStart.getFullYear() + 1, acquisitiveStart.getMonth(), acquisitiveStart.getDate());
-                
-                // Calcula a diferença em dias
                 const diffTime = acquisitiveEnd - today;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
                 return {
                     nome: r['Funcionário'] || r['Funcionario'] || 'N/A',
-                    matricula: r['Matrícula'] || r['Matricula'] || 'N/A',
+                    cargo: r['Cargo Origem'] || r['Cargo'] || r['Função'] || r['Funcao'] || 'N/A',
                     lotacao: r['Lotação'] || r['Lotacao'] || 'N/A',
+                    matricula: r['Matrícula'] || r['Matricula'] || 'N/A',
                     admissao: admissaoBR,
                     elegivelEm: acquisitiveEnd.toLocaleDateString('pt-BR'),
                     diasFaltantes: diffDays,
                 };
-            }).filter(item => item && item.diasFaltantes >= -30 && item.diasFaltantes <= 120) // Filtra para 30 dias passados até 120 dias futuros
-              .sort((a, b) => a.diasFaltantes - b.diasFaltantes);
-
-            if (feriasList.length === 0) {
-                container.innerHTML += `<div class="p-4 text-green-700 bg-green-50 rounded-lg">Nenhum servidor está próximo do seu período aquisitivo de férias nos próximos 4 meses.</div>`;
-                return;
-            }
-
-            let html = `<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funcionário</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lotação</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admissão</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Elegível em</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">`;
-
-            feriasList.forEach(item => {
-                let status = '';
-                let statusClass = 'bg-yellow-100 text-yellow-800';
-
-                if (item.diasFaltantes <= 0) {
-                    status = 'Elegível (Período vencido)';
-                    statusClass = 'bg-red-100 text-red-800';
-                } else if (item.diasFaltantes <= 30) {
-                    status = `${item.diasFaltantes} dias (URGENTE)`;
-                    statusClass = 'bg-orange-100 text-orange-800 font-bold';
-                } else {
-                    status = `${item.diasFaltantes} dias restantes`;
-                }
-
-                html += `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.nome}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.lotacao}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.admissao}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.elegivelEm}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
-                                ${status}
-                            </span>
-                        </td>
-                    </tr>
-                `;
             });
 
-            html += `</tbody></table></div>`;
-            container.innerHTML += html;
+            // Controles de relevância (foco no agora)
+            const controlsHTML = `
+                <div class="mb-2 flex flex-wrap items-center gap-3">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="modoAgora" checked>
+                        <span class="text-sm text-gray-700">Focar no agora</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <span class="text-sm text-gray-700">Janela futura</span>
+                        <select id="janelaDias" class="border rounded px-2 py-1 text-xs">
+                            <option value="60">60 dias</option>
+                            <option value="90" selected>90 dias</option>
+                            <option value="120">120 dias</option>
+                        </select>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <span class="text-sm text-gray-700">Tolerância passado</span>
+                        <select id="passadoDias" class="border rounded px-2 py-1 text-xs">
+                            <option value="0">Apenas elegíveis</option>
+                            <option value="15">15 dias</option>
+                            <option value="30" selected>30 dias</option>
+                        </select>
+                    </label>
+                </div>`;
+
+            // Tabela com filtros por coluna
+            const tableHTML = `
+                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Funcionário</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargo Origem</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lotação</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matrícula</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admissão</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Elegível em</th>
+                            <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                        <tr>
+                            <th class="px-4 pb-2"><input id="filtroNome" class="w-full border rounded px-2 py-1 text-xs" placeholder="Filtrar nome"></th>
+                            <th class="px-4 pb-2"><input id="filtroCargo" class="w-full border rounded px-2 py-1 text-xs" placeholder="Filtrar Cargo Origem"></th>
+                            <th class="px-4 pb-2"><input id="filtroLotacao" class="w-full border rounded px-2 py-1 text-xs" placeholder="Filtrar lotação"></th>
+                            <th class="px-4 pb-2"><input id="filtroMatricula" class="w-full border rounded px-2 py-1 text-xs" placeholder="Filtrar matrícula"></th>
+                            <th class="px-4 pb-2"><input id="filtroAdmissao" class="w-full border rounded px-2 py-1 text-xs" placeholder="dd/mm/aaaa"></th>
+                            <th class="px-4 pb-2"><input id="filtroElegivel" class="w-full border rounded px-2 py-1 text-xs" placeholder="dd/mm/aaaa"></th>
+                            <th class="px-4 pb-2 text-center"><input id="filtroStatus" class="w-full border rounded px-2 py-1 text-xs" placeholder="vencido/urgente/restantes"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="feriasTbody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table></div>
+                <div class="mt-2 text-right"><button id="limparFiltros" class="text-xs text-blue-700 hover:underline">Limpar filtros</button></div>
+            `;
+            container.innerHTML += controlsHTML + tableHTML;
+
+            const tbodyEl = container.querySelector('#feriasTbody');
+            const filtros = {
+                nome: container.querySelector('#filtroNome'),
+                cargo: container.querySelector('#filtroCargo'),
+                lotacao: container.querySelector('#filtroLotacao'),
+                matricula: container.querySelector('#filtroMatricula'),
+                admissao: container.querySelector('#filtroAdmissao'),
+                elegivel: container.querySelector('#filtroElegivel'),
+                status: container.querySelector('#filtroStatus'),
+            };
+            const modoAgoraEl = container.querySelector('#modoAgora');
+            const janelaDiasEl = container.querySelector('#janelaDias');
+            const passadoDiasEl = container.querySelector('#passadoDias');
+
+            function computeStatus(item) {
+                if (isNaN(item.diasFaltantes)) return 'Sem dados';
+                if (item.diasFaltantes <= 0) return 'Elegível (Período vencido)';
+                if (item.diasFaltantes <= 30) return `${item.diasFaltantes} dias (URGENTE)`;
+                return `${item.diasFaltantes} dias restantes`;
+            }
+            function statusClass(item) {
+                if (isNaN(item.diasFaltantes)) return 'bg-gray-100 text-gray-800';
+                if (item.diasFaltantes <= 0) return 'bg-red-100 text-red-800';
+                if (item.diasFaltantes <= 30) return 'bg-orange-100 text-orange-800 font-bold';
+                return 'bg-yellow-100 text-yellow-800';
+            }
+            function inclui(texto, filtro) {
+                return String(texto || '').toLowerCase().includes(String(filtro || '').toLowerCase());
+            }
+            function aplicaRelevancia(items) {
+                if (!modoAgoraEl.checked) return items;
+                const janela = Number(janelaDiasEl.value || 90);
+                const toleranciaPassado = Number(passadoDiasEl.value || 30);
+                return items.filter(it => {
+                    const df = it.diasFaltantes;
+                    if (isNaN(df)) return false; // sem dados, não é relevante
+                    if (df <= 0) {
+                        // Elegíveis: mantém apenas se não passou muito
+                        return df >= -toleranciaPassado;
+                    }
+                    // Futuros: mantém apenas dentro da janela
+                    return df <= janela;
+                });
+            }
+            function renderRows() {
+                const data = aplicaFiltros(feriasData);
+                tbodyEl.innerHTML = data.map(item => {
+                    const st = computeStatus(item);
+                    const stClass = statusClass(item);
+                    return `
+                        <tr>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${item.nome}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.cargo}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.lotacao}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.matricula}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.admissao}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.elegivelEm}</td>
+                            <td class="px-4 py-2 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${stClass}">${st}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            // Corrige chave usada por engano no filtro de Elegível em
+            function aplicaFiltros(items) {
+                const base = aplicaRelevancia(items);
+                return base.filter(it => {
+                    const st = computeStatus(it);
+                    return inclui(it.nome, filtros.nome.value)
+                        && inclui(it.cargo, filtros.cargo.value)
+                        && inclui(it.lotacao, filtros.lotacao.value)
+                        && inclui(it.matricula, filtros.matricula.value)
+                        && inclui(it.admissao, filtros.admissao.value)
+                        && inclui(it.elegivelEm, filtros.elegivel.value)
+                        && inclui(st, filtros.status.value);
+                });
+            }
+
+            Object.values(filtros).forEach(inp => inp.addEventListener('input', renderRows));
+            [modoAgoraEl, janelaDiasEl, passadoDiasEl].forEach(el => el.addEventListener('change', renderRows));
+            container.querySelector('#limparFiltros').addEventListener('click', () => {
+                Object.values(filtros).forEach(inp => inp.value = '');
+                renderRows();
+            });
+
+            // Render inicial (lista todos, ordenados por proximidade)
+            feriasData.sort((a, b) => {
+                const ad = isNaN(a.diasFaltantes) ? Infinity : a.diasFaltantes;
+                const bd = isNaN(b.diasFaltantes) ? Infinity : b.diasFaltantes;
+                return ad - bd;
+            });
+            renderRows();
         }
 
         function renderProcessosView(container) {
@@ -638,10 +933,31 @@
         function renderProcessoDetail(container, id) {
             const process = appState.mockProcesses.find(p => p.id === id);
             if (!process) { showView('processos'); return; }
+            // Garante estrutura de notas em blocos
+            if (!Array.isArray(process.notesList)) {
+                const migrated = (process.notes || '').trim();
+                process.notesList = migrated ? [{ id: Date.now(), type: 'Resumo', title: 'Resumo inicial', content: migrated, createdAt: new Date().toISOString() }] : [];
+            }
 
-            let urgencyOptions = ['Alta', 'Média', 'Baixa'].map(u => 
+            const urgencyOptions = ['Alta', 'Média', 'Baixa'].map(u => 
                 `<option value="${u}" ${process.urgency === u ? 'selected' : ''}>${u}</option>`
             ).join('');
+
+            const notesHTML = process.notesList
+                .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .map(n => `
+                    <div class="border rounded-md p-3 bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs px-2 py-1 rounded-full ${n.type === 'Resumo' ? 'bg-blue-100 text-blue-800' : n.type === 'Explicação' ? 'bg-purple-100 text-purple-800' : n.type === 'Citação' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}">${n.type}</span>
+                            <span class="text-xs text-gray-500">${new Date(n.createdAt).toLocaleString('pt-BR')}</span>
+                        </div>
+                        ${n.title ? `<div class="mt-1 font-semibold text-gray-800">${n.title}</div>` : ''}
+                        <div class="mt-1 text-sm text-gray-700 whitespace-pre-wrap">${n.content}</div>
+                        <div class="mt-2 text-right">
+                            <button class="text-red-600 text-xs hover:underline" data-del-note="${n.id}">Excluir</button>
+                        </div>
+                    </div>
+                `).join('');
 
             container.innerHTML = `
                 <button id="back-to-processes" class="text-blue-600 hover:underline mb-4">
@@ -658,34 +974,72 @@
                             <select id="urgency-select-${id}" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 ${urgencyOptions}
                             </select>
+                            <button id="save-urgency-${id}" class="mt-3 bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700 text-sm">Salvar Urgência</button>
+                            <span id="save-status-${id}" class="ml-2 text-xs text-gray-500"></span>
                         </div>
-                        
-                        <!-- Bloco de Notas -->
+
+                        <!-- Blocos de Notas -->
                         <div class="md:col-span-2 bg-white p-4 rounded-lg border shadow-inner">
-                            <label for="notes-block-${id}" class="block text-sm font-medium text-gray-700 mb-2">Bloco de Notas / Resumo de Atualização</label>
-                            <textarea id="notes-block-${id}" rows="8" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md p-2" placeholder="Resumo do que foi feito, recados, ou próximas ações...">${process.notes}</textarea>
-                            <button id="save-notes-${id}" class="mt-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-semibold">
-                                <i class="fas fa-save mr-2"></i> Salvar Notas e Urgência
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                                <div>
+                                    <label class="block text-xs text-gray-700 mb-1">Tipo</label>
+                                    <select id="note-type-${id}" class="w-full border rounded px-2 py-1 text-sm">
+                                        <option>Resumo</option>
+                                        <option>Explicação</option>
+                                        <option>Citação</option>
+                                        <option>Ação</option>
+                                        <option>Observação</option>
+                                    </select>
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label class="block text-xs text-gray-700 mb-1">Título (opcional)</label>
+                                    <input id="note-title-${id}" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="Ex.: Encaminhamento ao jurídico">
+                                </div>
+                            </div>
+                            <label class="block text-xs text-gray-700 mt-2 mb-1">Conteúdo</label>
+                            <textarea id="note-content-${id}" rows="5" class="w-full border rounded px-2 py-2 text-sm" placeholder="Descreva o andamento, citações, explicações ou ações..."></textarea>
+                            <button id="add-note-${id}" class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition text-sm">
+                                <i class="fas fa-plus mr-2"></i> Adicionar Bloco de Nota
                             </button>
-                            <span id="save-status-${id}" class="ml-3 text-sm text-gray-500"></span>
+
+                            <div class="mt-4 space-y-3" id="notes-list-${id}">
+                                ${notesHTML || '<div class="text-sm text-gray-500">Nenhum bloco de nota ainda.</div>'}
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
 
             document.getElementById('back-to-processes').addEventListener('click', () => showView('processos'));
-            document.getElementById(`save-notes-${id}`).addEventListener('click', () => {
-                const notes = document.getElementById(`notes-block-${id}`).value;
+            document.getElementById(`save-urgency-${id}`).addEventListener('click', () => {
                 const urgency = document.getElementById(`urgency-select-${id}`).value;
-
-                process.notes = notes;
                 process.urgency = urgency;
-                process.update = new Date().toLocaleDateString('pt-BR'); // Atualiza data
+                process.update = new Date().toLocaleDateString('pt-BR');
                 saveSeiProcesses();
-
                 const statusEl = document.getElementById(`save-status-${id}`);
-                statusEl.textContent = 'Salvo com sucesso!';
+                statusEl.textContent = 'Urgência salva!';
                 setTimeout(() => statusEl.textContent = '', 3000);
+            });
+
+            document.getElementById(`add-note-${id}`).addEventListener('click', () => {
+                const type = document.getElementById(`note-type-${id}`).value;
+                const title = document.getElementById(`note-title-${id}`).value.trim();
+                const content = document.getElementById(`note-content-${id}`).value.trim();
+                if (!content) { alert('Preencha o conteúdo da nota.'); return; }
+                const note = { id: Date.now(), type, title, content, createdAt: new Date().toISOString() };
+                process.notesList.unshift(note);
+                process.update = new Date().toLocaleDateString('pt-BR');
+                saveSeiProcesses();
+                renderProcessoDetail(container, id);
+            });
+
+            container.querySelectorAll('[data-del-note]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const nid = Number(e.currentTarget.getAttribute('data-del-note'));
+                    process.notesList = process.notesList.filter(n => n.id !== nid);
+                    saveSeiProcesses();
+                    renderProcessoDetail(container, id);
+                });
             });
         }
 
@@ -807,7 +1161,8 @@
             ];
         }
         function buildAutoFeriadosMap(mm, aa) {
-            const y = Number(aa), m = Number(mm);
+            const targetYear = Number(aa);
+            const targetMonth = Number(mm);
             const map = {};
             const natOn = document.getElementById(PONTO_DOM_IDS.toggleNat)?.checked ?? true;
             const estOn = document.getElementById(PONTO_DOM_IDS.toggleEstMa)?.checked ?? true;
@@ -817,16 +1172,16 @@
                 if (!enabled) return;
                 list.forEach(item => {
                     const iso = item.key.length === 10 ? item.key : String(item.key).slice(0,10);
-                    const [y, m2, d] = iso.split('-');
-                    if (Number(y) === y && Number(m2) === m) {
+                    const [yStr, mStr] = iso.split('-');
+                    if (Number(yStr) === targetYear && Number(mStr) === targetMonth) {
                         map[iso] = item.nome || 'FERIADO';
                     }
                 });
             };
 
-            addList(gerarFeriadosNacionaisLocal(y), natOn);
-            addList(getEstaduaisMA(y), estOn);
-            addList(getMunicipaisSaoLuis(y), munOn);
+            addList(gerarFeriadosNacionaisLocal(targetYear), natOn);
+            addList(getEstaduaisMA(targetYear), estOn);
+            addList(getMunicipaisSaoLuis(targetYear), munOn);
             return map;
         }
 
@@ -884,7 +1239,24 @@
                     }
                     tr.removeAttribute('data-feriado-aplicado');
                     tr.classList.remove('bg-gray-100');
-                    ponto_populateDaysTable(root, mm, aa); // Rerenderiza os dias para fins de semana
+                    // Reaplica estado de fim de semana se necessário
+                    const ddTxt = dayCell.textContent.trim();
+                    const ddNum = Number(ddTxt);
+                    const data = new Date(Number(aa), Number(mm) - 1, ddNum);
+                    const dow = data.getDay(); // 0=Dom, 6=Sáb
+                    if (dow === 0 || dow === 6) {
+                        const label = dow === 0 ? 'DOMINGO' : 'SÁBADO';
+                        const infoTd = document.createElement('td');
+                        infoTd.setAttribute('colspan', '7');
+                        infoTd.className = 'text-center font-bold text-red-600 bg-red-50';
+                        infoTd.textContent = label;
+                        const cels = Array.from(tr.querySelectorAll('td'));
+                        for (let i = cels.length - 1; i >= 1; i--) { tr.removeChild(cels[i]); }
+                        tr.appendChild(infoTd);
+                        tr.setAttribute('data-weekend-aplicado', '1');
+                    } else {
+                        tr.removeAttribute('data-weekend-aplicado');
+                    }
                 }
 
                 const dayCell = tr.querySelector('td:first-child');
@@ -1097,7 +1469,11 @@
                 const nome = combinedMap[key];
                 const cell = document.createElement('div');
                 cell.className = 'border rounded px-1 py-1 text-left hover:bg-blue-50 transition min-h-[50px]';
-                cell.classList.add(nome ? 'bg-red-50 border-red-200' : 'bg-white');
+                if (nome) {
+                    cell.classList.add('bg-red-50', 'border-red-200');
+                } else {
+                    cell.classList.add('bg-white');
+                }
                 cell.innerHTML = `<div class="font-bold text-xs">${dd}</div>${nome ? `<div class="text-[10px] text-red-700">${nome}</div>` : ''}`;
                 cell.title = nome || '';
                 cont.appendChild(cell);
@@ -1299,15 +1675,25 @@
         // ====================================================================
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Roteamento baseado em hash
+            // Roteamento baseado em hash (leitura inicial apenas)
+            const initialHash = (location.hash || '').replace('#','').trim();
+            const validViews = ['home','ferias','ponto','processos','documentacao','noticias'];
+            if (validViews.includes(initialHash)) {
+                appState.currentView = initialHash;
+            }
+
+            // Navegação SPA sem bloquear abertura em nova aba/guia
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // Obtém a view do data-attribute, que é o que precisamos
-                    const view = e.currentTarget.dataset.view;
-                    // Chamamos showView com a view alvo
-                    showView(view);
+                    const isLeftClick = e.button === 0;
+                    const hasModifier = e.ctrlKey || e.metaKey || e.shiftKey || e.altKey;
+                    if (isLeftClick && !hasModifier) {
+                        e.preventDefault();
+                        const view = e.currentTarget.dataset.view;
+                        showView(view);
+                    }
+                    // Caso contrário, permitir comportamento padrão (abrir nova aba/guia)
                 });
             });
             // O evento hashchange no final do arquivo também foi removido,
@@ -1317,6 +1703,7 @@
             // Carrega dados e inicia o app
             carregarPlanilha();
             loadSeiProcesses();
+            loadNoticias();
             ponto_bindEvents();
             showView(appState.currentView);
         });
