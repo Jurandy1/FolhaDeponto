@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -11,10 +11,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
-        @import url('https://fonts.cdnfonts.com/css/arial-narrow');
+        /* Import removido: fonte externa causava erro de carregamento */
 
         /* --- CONFIGURAÇÕES GERAIS --- */
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', Arial, Helvetica, sans-serif; background-color: #f3f4f6; }
         .bg-semcas { background-color: #007bff; }
         .text-semcas { color: #007bff; }
 
@@ -44,7 +44,7 @@
             box-sizing: border-box;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             margin: 0 auto;
-            font-family: "Arial Narrow", Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             position: relative;
         }
 
@@ -140,6 +140,7 @@
                         <li><button onclick="router('ponto')" class="nav-btn px-3 py-2 rounded bg-white/20 font-bold transition flex items-center gap-2" data-target="ponto"><i class="fas fa-clock"></i> Folha de Ponto</button></li>
                         <li><button onclick="router('processos')" class="nav-btn px-3 py-2 rounded hover:bg-white/10 transition flex items-center gap-2" data-target="processos"><i class="fas fa-folder-open"></i> Processos</button></li>
                         <li><button onclick="router('noticias')" class="nav-btn px-3 py-2 rounded hover:bg-white/10 transition flex items-center gap-2" data-target="noticias"><i class="fas fa-newspaper"></i> Notícias</button></li>
+                        <li><button onclick="router('sugestoes')" class="nav-btn px-3 py-2 rounded hover:bg-white/10 transition flex items-center gap-2" data-target="sugestoes"><i class="fas fa-lightbulb"></i> Sugestões</button></li>
                     </ul>
                 </nav>
             </div>
@@ -212,14 +213,18 @@
 
             <!-- Tabela -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-4 border-b bg-gray-50 flex gap-4">
+                <div class="p-4 border-b bg-gray-50 flex flex-col md:flex-row gap-2 md:gap-4 md:items-center">
                     <input id="filtroFerias" oninput="renderTabelaFerias()" placeholder="Filtrar por nome..." class="border rounded px-3 py-1 text-sm w-full md:w-1/3">
-                    <select id="filtroStatusFerias" onchange="renderTabelaFerias()" class="border rounded px-3 py-1 text-sm">
+                    <select id="filtroStatusFerias" onchange="renderTabelaFerias()" class="border rounded px-3 py-1 text-sm w-full md:w-48">
                         <option value="todos">Todos os Status</option>
                         <option value="vencida">Vencidas</option>
                         <option value="critico">Críticas</option>
                         <option value="atencao">Atenção</option>
                     </select>
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <input id="sheetUrlInput" class="border rounded px-3 py-1 text-sm w-full md:w-96" placeholder="URL CSV público da planilha de RH (Google Sheets)">
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick="salvarSheetUrl()">Salvar</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -238,19 +243,86 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3 text-xs text-gray-500 text-center bg-gray-50">
-                    * Cálculo baseado na data de admissão. Considera apenas o período aquisitivo atual não prescrito.
+                <div class="p-3 bg-gray-50 flex justify-between items-center">
+                    <div class="text-xs text-gray-500">* Cálculo baseado na data de admissão. Considera apenas o período aquisitivo atual não prescrito.</div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <button id="feriasPrevBtn" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100" onclick="feriasPrev()">Anterior</button>
+                        <span id="feriasPageInfo" class="text-gray-700">Página 1</span>
+                        <button id="feriasNextBtn" class="px-2 py-1 rounded border border-gray-300 hover:bg-gray-100" onclick="feriasNext()">Próxima</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="processos-view" class="view-section hidden bg-white p-6 rounded-xl shadow-sm">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Processos SEI</h2>
-            <p class="text-gray-600">Integração com sistema de processos em manutenção.</p>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Acompanhamento de Processos (SEI)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1">
+                    <h3 class="font-bold text-gray-700 mb-2">Cadastrar Processo</h3>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-600">Número SEI</label>
+                        <input id="procNumero" class="w-full border rounded px-3 py-2 text-sm" placeholder="Ex.: 00000.000000/0000-00">
+                        <label class="block text-xs font-bold text-gray-600">Título</label>
+                        <input id="procTitulo" class="w-full border rounded px-3 py-2 text-sm" placeholder="Descreva o assunto">
+                        <label class="block text-xs font-bold text-gray-600">Data</label>
+                        <input id="procData" type="date" class="w-full border rounded px-3 py-2 text-sm">
+                        <button id="btnSalvarProc" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">Salvar</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <h3 class="font-bold text-gray-700 mb-2">Meus Processos</h3>
+                    <div id="listaProcessos" class="space-y-2"></div>
+                </div>
+            </div>
+            <div id="procDetalheModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl w-full max-w-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-gray-800">Detalhes do Processo</h3>
+                        <button onclick="fecharProcDetalhe()" class="text-gray-600 hover:text-gray-900"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div id="procDetalheConteudo" class="text-sm"></div>
+                </div>
+            </div>
         </div>
         <div id="noticias-view" class="view-section hidden bg-white p-6 rounded-xl shadow-sm">
             <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Mural de Notícias</h2>
-            <p class="text-gray-600">Nenhuma notícia nova cadastrada.</p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1">
+                    <h3 class="font-bold text-gray-700 mb-2">Nova notícia/aviso</h3>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-bold text-gray-600">Título</label>
+                        <input id="newsTitulo" class="w-full border rounded px-3 py-2 text-sm">
+                        <label class="block text-xs font-bold text-gray-600">Resumo</label>
+                        <input id="newsResumo" class="w-full border rounded px-3 py-2 text-sm" placeholder="Breve descrição">
+                        <label class="block text-xs font-bold text-gray-600">Conteúdo</label>
+                        <textarea id="newsConteudo" class="w-full border rounded px-3 py-2 text-sm h-24"></textarea>
+                        <div class="flex items-center gap-2">
+                            <input id="newsPublicado" type="checkbox">
+                            <label for="newsPublicado" class="text-sm text-gray-700">Publicar na página inicial</label>
+                        </div>
+                        <button id="btnSalvarNews" class="w-full bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700">Salvar notícia</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <h3 class="font-bold text-gray-700 mb-2">Notícias</h3>
+                    <div id="listaNoticias" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: SUGESTÕES RH SEMCAS -->
+        <div id="sugestoes-view" class="view-section hidden bg-white p-6 rounded-xl shadow-sm">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Sugestões de Melhorias (RH SEMCAS)</h2>
+            <ul class="list-disc ml-6 text-gray-700 space-y-2">
+                <li>Unificar autenticação de servidores com acesso único (SSO) e perfis.</li>
+                <li>Dashboard de férias com alertas por e‑mail antes do vencimento.</li>
+                <li>Integração direta com SEI para leitura de status e movimentações.</li>
+                <li>Calendário institucional com feriados oficiais e pontos facultativos configuráveis.</li>
+                <li>Workflow de publicação de notícias com revisão e agendamento.</li>
+                <li>Relatórios de frequência e ausências com exportação para CSV/PDF.</li>
+                <li>Central de documentos (modelos atualizados e busca avançada).</li>
+                <li>Auditoria de alterações (quem alterou, quando e o que foi alterado).</li>
+            </ul>
         </div>
 
         <!-- View: PONTO (Ferramenta Principal) -->
@@ -489,29 +561,57 @@
         // ====================================================================
         // DADOS E ESTADO
         // ====================================================================
-        const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSETVY6MUfwwl_TWax9qyqLXYzY3yZSuhPIQj16hHu-EhhdVYpyYnp81NOcM3akDQ/pub?output=csv';
-        
-        // Feriados Oficiais 2025 (Brasil + MA + São Luís)
-        const FERIADOS_2025 = {
-            '01-01': { nome: 'Confraternização Universal', tipo: 'feriado' },
-            '03-03': { nome: 'Carnaval (Ponto Facultativo)', tipo: 'facultativo' },
-            '04-03': { nome: 'Carnaval (Ponto Facultativo)', tipo: 'facultativo' },
-            '05-03': { nome: 'Quarta-feira de Cinzas (Facultativo)', tipo: 'facultativo' },
-            '18-04': { nome: 'Sexta-feira da Paixão', tipo: 'feriado' },
-            '21-04': { nome: 'Tiradentes', tipo: 'feriado' },
-            '01-05': { nome: 'Dia do Trabalho', tipo: 'feriado' },
-            '19-06': { nome: 'Corpus Christi (Facultativo/SLZ)', tipo: 'facultativo' },
-            '29-06': { nome: 'Dia de São Pedro (Municipal)', tipo: 'feriado' },
-            '28-07': { nome: 'Adesão do Maranhão (Estadual)', tipo: 'feriado' },
-            '07-09': { nome: 'Independência do Brasil', tipo: 'feriado' },
-            '08-09': { nome: 'Natividade/Aniv. São Luís', tipo: 'feriado' },
-            '12-10': { nome: 'N. Sra. Aparecida', tipo: 'feriado' },
-            '02-11': { nome: 'Finados', tipo: 'feriado' },
-            '15-11': { nome: 'Proclamação da República', tipo: 'feriado' },
-            '20-11': { nome: 'Consciência Negra', tipo: 'feriado' },
-            '08-12': { nome: 'N. Sra. Conceição (Municipal)', tipo: 'feriado' },
-            '25-12': { nome: 'Natal', tipo: 'feriado' }
-        };
+        // URL da planilha (configurável)
+        let SHEET_CSV_URL = localStorage.getItem('sheetCsvUrl') || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSETVY6MUfwwl_TWax9qyqLXYzY3yZSuhPIQj16hHu-EhhdVYpyYnp81NOcM3akDQ/pub?output=csv';
+
+        // Banco de feriados dinâmico: Brasil, Maranhão, São Luís
+        function easterDate(year) {
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return new Date(year, month - 1, day);
+        }
+        function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+        function keyISO(d) { return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+        function getHolidayMap(year) {
+            const map = new Map();
+            const push = (y,m,d,nome,tipo='feriado') => map.set(`${y}-${pad2(m)}-${pad2(d)}`, { nome, tipo });
+            // Nacionais fixos
+            push(year,1,1,'Confraternização Universal');
+            push(year,4,21,'Tiradentes');
+            push(year,5,1,'Dia do Trabalho');
+            push(year,9,7,'Independência do Brasil');
+            push(year,10,12,'N. Sra. Aparecida');
+            push(year,11,2,'Finados');
+            push(year,11,15,'Proclamação da República');
+            push(year,12,25,'Natal');
+            push(year,11,20,'Consciência Negra');
+            // Móveis
+            const easter = easterDate(year);
+            map.set(keyISO(addDays(easter,-2)), { nome: 'Sexta-feira da Paixão', tipo: 'feriado' });
+            map.set(keyISO(addDays(easter,60)), { nome: 'Corpus Christi', tipo: 'facultativo' });
+            map.set(keyISO(addDays(easter,-48)), { nome: 'Carnaval (Segunda)', tipo: 'facultativo' });
+            map.set(keyISO(addDays(easter,-47)), { nome: 'Carnaval (Terça)', tipo: 'facultativo' });
+            map.set(keyISO(addDays(easter,-46)), { nome: 'Quarta-feira de Cinzas', tipo: 'facultativo' });
+            // Estaduais MA
+            push(year,7,28,'Adesão do Maranhão (Estadual)');
+            // Municipais São Luís
+            push(year,6,29,'Dia de São Pedro (Municipal)');
+            push(year,9,8,'Aniversário de São Luís (Municipal)');
+            push(year,12,8,'N. Sra. da Conceição (Municipal)');
+            return map;
+        }
 
         let appState = {
             registros: [],
@@ -560,28 +660,80 @@
         function pad2(n) { return String(n).padStart(2, '0'); }
         function nomeMesPT(m) { return ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][m-1] || ''; }
         function parseCSV(text) {
+            // Remove BOM se existir
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
             const lines = text.split(/\r?\n/).filter(l => l.trim().length);
             if (!lines.length) return [];
-            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+            // Detecta delimitador: vírgula (CSV) ou ponto e vírgula (locale PT)
+            const headerLine = lines[0];
+            const countComma = (headerLine.match(/,/g)||[]).length;
+            const countSemi = (headerLine.match(/;/g)||[]).length;
+            const delim = countSemi > countComma ? ';' : ',';
+
+            // Parser robusto com suporte a aspas e delimitadores no conteúdo
+            function splitLine(line) {
+                const res = []; let cur = ''; let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+                        else { inQuotes = !inQuotes; }
+                    } else if (ch === delim && !inQuotes) {
+                        res.push(cur); cur = '';
+                    } else { cur += ch; }
+                }
+                res.push(cur);
+                return res.map(c => c.trim().replace(/^"|"$/g, ''));
+            }
+
+            const headers = splitLine(lines[0]).map(h => h.trim());
             return lines.slice(1).map(line => {
-                const cols = line.split(',').map(c => c.trim().replace(/"/g, ''));
-                let obj = {}; headers.forEach((h, i) => obj[h] = cols[i] || '');
+                const cols = splitLine(line);
+                const obj = {}; headers.forEach((h, i) => obj[h] = (cols[i]||'').trim());
                 return obj;
             });
+        }
+
+        function norm(str) { return (str||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+        function getField(row, patterns) {
+            const keys = Object.keys(row||{});
+            for (const key of keys) {
+                const nk = norm(key);
+                for (const p of patterns) {
+                    if (typeof p === 'string') { if (nk.includes(norm(p))) return row[key]; }
+                    else if (p instanceof RegExp) { if (p.test(nk)) return row[key]; }
+                }
+            }
+            return '';
+        }
+        function debounce(fn, wait=250) {
+            let t; return function(...args){ clearTimeout(t); t = setTimeout(()=>fn.apply(this,args), wait); };
+        }
+        function getHolidayMapCached(ano) {
+            if(!appState.holidayCache) appState.holidayCache = new Map();
+            if(!appState.holidayCache.has(ano)) appState.holidayCache.set(ano, getHolidayMap(ano));
+            return appState.holidayCache.get(ano);
         }
 
         async function carregarPlanilha() {
             if(appState.registros.length > 0) return;
             try {
-                const resp = await fetch(SHEET_CSV_URL);
+                let resp;
+                try {
+                    resp = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
+                } catch (e) {
+                    // Fallback CORS proxy se necessário
+                    resp = await fetch(`https://cors.isomorphic-git.org/${SHEET_CSV_URL}`, { cache: 'no-store' });
+                }
                 const csv = await resp.text();
                 appState.registros = parseCSV(csv);
                 
                 const unicos = new Set();
                 appState.listaNomesCache = [];
-                // Adaptado para os novos cabeçalhos: 'Funcionário'
+                // Busca flexível de nome
                 appState.registros.forEach(r => {
-                    const nome = (r['Funcionário'] || r['Funcionario'] || '').trim();
+                    const nome = (getField(r, [/funcion[aá]rio/, /servidor/, /nome/, /colaborador/])||'').trim();
                     if(nome && !unicos.has(nome)) {
                         unicos.add(nome);
                         appState.listaNomesCache.push(nome);
@@ -599,7 +751,7 @@
                 }
                 renderListaLote();
 
-            } catch(e) { console.error("Erro planilha", e); }
+            } catch(e) { console.error("Erro planilha", e); alert('Não foi possível carregar a planilha. Verifique a URL pública CSV ou tente novamente.'); }
         }
 
         // ====================================================================
@@ -615,9 +767,9 @@
             let stats = { vencida: 0, critico: 0, atencao: 0, emdia: 0 };
 
             appState.registros.forEach(r => {
-                const nome = r['Funcionário'] || r['Funcionario'] || '';
-                const lotacao = r['Lotação'] || r['Lotacao'] || 'SEMCAS';
-                const admissaoStr = r['Admissão'] || r['Admissao'];
+                const nome = getField(r, [/funcion[aá]rio/, /servidor/, /nome/, /colaborador/]) || '';
+                const lotacao = getField(r, [/lota[cç][aã]o/, /unidade/, /setor/, /org[aã]o/]) || 'SEMCAS';
+                const admissaoStr = getField(r, [/admiss[aã]o/, /data.*admiss/, /dt.*admiss/]);
                 
                 if(!nome || !admissaoStr) return;
 
@@ -673,26 +825,42 @@
             renderTabelaFerias();
         }
 
+        function salvarSheetUrl() {
+            const inp = document.getElementById('sheetUrlInput');
+            const url = (inp?.value||'').trim();
+            if(!url) { alert('Informe a URL pública CSV da planilha.'); return; }
+            try {
+                localStorage.setItem('sheetCsvUrl', url);
+                SHEET_CSV_URL = url;
+                appState.registros = [];
+                carregarFerias();
+            } catch(e) { alert('Falha ao salvar URL da planilha.'); }
+        }
+
+        const FERIAS_PAGE_SIZE = 50;
         function renderTabelaFerias() {
             const tbody = document.getElementById('tabela-ferias-body');
             tbody.innerHTML = '';
 
             const filtroNome = document.getElementById('filtroFerias').value.toLowerCase();
             const filtroStatus = document.getElementById('filtroStatusFerias').value;
+            const dadosOrdenados = [...appState.feriasDados].sort((a, b) => a.diasRestantes - b.diasRestantes);
+            const filtrados = dadosOrdenados.filter(item => (filtroStatus === 'todos' || item.status === filtroStatus) && (!filtroNome || item.nome.toLowerCase().includes(filtroNome)));
 
-            const dadosOrdenados = appState.feriasDados.sort((a, b) => a.diasRestantes - b.diasRestantes);
+            if(!appState.feriasPage) appState.feriasPage = 1;
+            const totalPages = Math.max(1, Math.ceil(filtrados.length / FERIAS_PAGE_SIZE));
+            if(appState.feriasPage > totalPages) appState.feriasPage = totalPages;
+            const start = (appState.feriasPage - 1) * FERIAS_PAGE_SIZE;
+            const pageItems = filtrados.slice(start, start + FERIAS_PAGE_SIZE);
 
-            dadosOrdenados.forEach(item => {
-                if(filtroStatus !== 'todos' && item.status !== filtroStatus) return;
-                if(filtroNome && !item.nome.toLowerCase().includes(filtroNome)) return;
-
+            let html = '';
+            pageItems.forEach(item => {
                 let badge = '';
                 if(item.status === 'vencida') badge = `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-bold">VENCIDA</span>`;
                 else if(item.status === 'critico') badge = `<span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold">CRÍTICO</span>`;
                 else if(item.status === 'atencao') badge = `<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold">ATENÇÃO</span>`;
                 else badge = `<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">EM DIA</span>`;
-
-                tbody.innerHTML += `
+                html += `
                     <tr class="hover:bg-gray-50 border-b border-gray-100">
                         <td class="px-4 py-3 font-medium text-gray-900">${item.nome}</td>
                         <td class="px-4 py-3 text-gray-500 text-xs">${item.lotacao}</td>
@@ -700,10 +868,16 @@
                         <td class="px-4 py-3 text-gray-700 font-bold">${item.limite}</td>
                         <td class="px-4 py-3 ${item.diasRestantes < 0 ? 'text-red-600 font-bold' : ''}">${item.diasRestantes} dias</td>
                         <td class="px-4 py-3 text-center">${badge}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
+            tbody.innerHTML = html;
+
+            const info = document.getElementById('feriasPageInfo'); if(info) info.textContent = `Página ${appState.feriasPage} de ${totalPages} (${filtrados.length} registros)`;
+            const prevBtn = document.getElementById('feriasPrevBtn'); if(prevBtn) prevBtn.disabled = appState.feriasPage <= 1;
+            const nextBtn = document.getElementById('feriasNextBtn'); if(nextBtn) nextBtn.disabled = appState.feriasPage >= totalPages;
         }
+        window.feriasPrev = function(){ if(appState.feriasPage>1){ appState.feriasPage--; renderTabelaFerias(); } }
+        window.feriasNext = function(){ appState.feriasPage++; renderTabelaFerias(); }
 
 
         // ====================================================================
@@ -716,6 +890,7 @@
 
             const divOficiais = document.getElementById('listaFeriadosOficiais');
             if(divOficiais) divOficiais.innerHTML = ''; // Limpa lista visual
+            const holidayMap = getHolidayMap(Number(aa));
             
             for(let i=1; i<=31; i++) {
                 const tr = document.createElement('tr');
@@ -730,12 +905,11 @@
                 if (i <= diasNoMes) {
                     const data = new Date(aa, Number(mm)-1, i);
                     const diaSemana = data.getDay(); // 0=Dom
-                    const key = `${pad2(i)}-${pad2(mm)}`;
                     const keyIso = `${aa}-${pad2(mm)}-${pad2(i)}`;
 
-                    // Checa Feriado Oficial (Só 2025 para este demo, mas lógica é extensível)
-                    let feriado = FERIADOS_2025[key];
-                    if (feriado && Number(aa) === 2025) {
+                    // Checa Feriado Oficial (dinâmico)
+                    let feriado = holidayMap.get(keyIso);
+                    if (feriado) {
                         isSpecial = true;
                         if(feriado.tipo === 'feriado') {
                             estilo = "background-color: #ffe4e6; color: #991b1b; font-weight: bold; font-size: 9px; letter-spacing: 0.5px;";
@@ -842,17 +1016,17 @@
             const div = document.getElementById('listaLote');
             if(!div) return;
             const filtro = document.getElementById('filtroLote').value.toLowerCase();
-            div.innerHTML = '';
-            
+            let html = '';
             appState.listaNomesCache.filter(n => n.toLowerCase().includes(filtro)).forEach(nome => {
                 const checked = appState.loteSelecionados.has(nome) ? 'checked' : '';
                 const id = `chk-${nome.replace(/\s/g,'')}`;
-                div.innerHTML += `
+                html += `
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="${id}" value="${nome}" ${checked} onchange="toggleLote(this)">
                         <label for="${id}" class="truncate cursor-pointer">${nome}</label>
                     </div>`;
             });
+            div.innerHTML = html;
             document.getElementById('contadorLote').innerText = `${appState.loteSelecionados.size} selecionados`;
         }
 
@@ -915,6 +1089,136 @@
         };
 
         // ====================================================================
+        // MÓDULO: PROCESSOS
+        // ====================================================================
+        function loadProcessos() {
+            try { appState.processos = JSON.parse(localStorage.getItem('processos') || '[]'); }
+            catch { appState.processos = []; }
+        }
+        function saveProcessos() { localStorage.setItem('processos', JSON.stringify(appState.processos)); }
+        function renderListaProcessos() {
+            const div = document.getElementById('listaProcessos');
+            if(!div) return;
+            div.innerHTML = '';
+            if(appState.processos.length === 0) { div.innerHTML = '<div class="text-sm text-gray-500">Nenhum processo cadastrado.</div>'; return; }
+            appState.processos.sort((a,b)=> new Date(b.data) - new Date(a.data)).forEach((p, idx) => {
+                const qtNotas = (p.notas||[]).length;
+                div.innerHTML += `
+                    <div class="border rounded p-3 flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-gray-800">${p.titulo}</div>
+                            <div class="text-xs text-gray-600">SEI: ${p.numero} • Data: ${new Date(p.data).toLocaleDateString('pt-BR')}</div>
+                            <div class="text-xs text-gray-600">Notas: ${qtNotas}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="text-blue-600 text-sm" onclick="abrirProcDetalhe(${idx})">Abrir</button>
+                            <button class="text-red-600 text-sm" onclick="excluirProcesso(${idx})">Excluir</button>
+                        </div>
+                    </div>`;
+            });
+        }
+        function cadastrarProcesso() {
+            const numero = document.getElementById('procNumero').value.trim();
+            const titulo = document.getElementById('procTitulo').value.trim();
+            const data = document.getElementById('procData').value;
+            if(!numero || !titulo || !data) return alert('Preencha número, título e data.');
+            appState.processos.push({ numero, titulo, data, notas: [] });
+            saveProcessos(); renderListaProcessos();
+            document.getElementById('procNumero').value = '';
+            document.getElementById('procTitulo').value = '';
+            document.getElementById('procData').value = '';
+        }
+        function excluirProcesso(idx) { if(!confirm('Excluir este processo?')) return; appState.processos.splice(idx,1); saveProcessos(); renderListaProcessos(); }
+        function abrirProcDetalhe(idx) {
+            const p = appState.processos[idx];
+            const modal = document.getElementById('procDetalheModal');
+            const conteudo = document.getElementById('procDetalheConteudo');
+            modal.classList.remove('hidden');
+            const notasHtml = (p.notas||[]).map((n,i)=>`<div class="border rounded p-2 mb-1"><div class="text-xs text-gray-600">${new Date(n.quando).toLocaleString('pt-BR')}</div><div>${n.texto}</div><div class="text-right"><button class="text-red-600 text-xs" onclick="excluirNota(${idx}, ${i})">Excluir nota</button></div></div>`).join('');
+            conteudo.innerHTML = `
+                <div class="space-y-2">
+                    <div class="text-sm">SEI: <span class="font-bold">${p.numero}</span></div>
+                    <div class="text-sm">Título: <span class="font-bold">${p.titulo}</span></div>
+                    <div class="text-sm">Data: <span class="font-bold">${new Date(p.data).toLocaleDateString('pt-BR')}</span></div>
+                </div>
+                <div class="mt-3">
+                    <h4 class="font-bold text-gray-800 mb-1">Bloco de notas</h4>
+                    <div class="flex gap-2 mb-2">
+                        <input id="notaData" type="datetime-local" class="border rounded px-2 py-1 text-sm">
+                        <input id="notaTexto" class="border rounded px-2 py-1 text-sm w-full" placeholder="Resumo, ressalvas...">
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded text-sm" onclick="adicionarNota(${idx})">Adicionar</button>
+                    </div>
+                    <div>${notasHtml || '<div class=\'text-sm text-gray-500\'>Sem notas.</div>'}</div>
+                </div>`;
+        }
+        function fecharProcDetalhe() { document.getElementById('procDetalheModal').classList.add('hidden'); }
+        function adicionarNota(idx) {
+            const quando = document.getElementById('notaData').value || new Date().toISOString();
+            const texto = document.getElementById('notaTexto').value.trim();
+            if(!texto) return;
+            appState.processos[idx].notas.push({ quando, texto });
+            saveProcessos(); abrirProcDetalhe(idx);
+            document.getElementById('notaTexto').value = '';
+        }
+        function excluirNota(pIdx, nIdx) { appState.processos[pIdx].notas.splice(nIdx,1); saveProcessos(); abrirProcDetalhe(pIdx); }
+
+        // ====================================================================
+        // MÓDULO: NOTÍCIAS
+        // ====================================================================
+        function loadNoticias() { try { appState.noticias = JSON.parse(localStorage.getItem('noticias') || '[]'); } catch { appState.noticias = []; } }
+        function saveNoticias() { localStorage.setItem('noticias', JSON.stringify(appState.noticias)); }
+        function cadastrarNoticia() {
+            const titulo = document.getElementById('newsTitulo').value.trim();
+            const resumo = document.getElementById('newsResumo').value.trim();
+            const conteudo = document.getElementById('newsConteudo').value.trim();
+            const publicado = document.getElementById('newsPublicado').checked;
+            if(!titulo || !resumo || !conteudo) return alert('Preencha título, resumo e conteúdo.');
+            const item = { titulo, resumo, conteudo, publicado, criadoEm: new Date().toISOString() };
+            appState.noticias.push(item); saveNoticias(); renderListaNoticias(); renderHomeNoticias();
+            document.getElementById('newsTitulo').value = '';
+            document.getElementById('newsResumo').value = '';
+            document.getElementById('newsConteudo').value = '';
+            document.getElementById('newsPublicado').checked = false;
+        }
+        function renderListaNoticias() {
+            const div = document.getElementById('listaNoticias'); if(!div) return;
+            div.innerHTML = '';
+            if(appState.noticias.length === 0) { div.innerHTML = '<div class="text-sm text-gray-500">Nenhuma notícia cadastrada.</div>'; return; }
+            appState.noticias.sort((a,b)=> new Date(b.criadoEm) - new Date(a.criadoEm)).forEach((n, idx) => {
+                div.innerHTML += `
+                    <div class="border rounded p-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-bold text-gray-800">${n.titulo}</div>
+                                <div class="text-xs text-gray-600">${new Date(n.criadoEm).toLocaleString('pt-BR')}</div>
+                                <div class="text-sm text-gray-700 mt-1">${n.resumo}</div>
+                            </div>
+                            <div class="text-right">
+                                <label class="text-xs text-gray-600 flex items-center gap-1"><input type="checkbox" ${n.publicado?'checked':''} onchange="togglePublicacao(${idx}, this.checked)"> Publicado</label>
+                                <button class="text-red-600 text-xs mt-1" onclick="excluirNoticia(${idx})">Excluir</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+        function excluirNoticia(idx) { if(!confirm('Excluir esta notícia?')) return; appState.noticias.splice(idx,1); saveNoticias(); renderListaNoticias(); renderHomeNoticias(); }
+        function togglePublicacao(idx, checked) { appState.noticias[idx].publicado = checked; saveNoticias(); renderHomeNoticias(); }
+        function renderHomeNoticias() {
+            const homeCards = document.querySelector('#home-view .grid'); if(!homeCards) return;
+            const publicados = appState.noticias.filter(n=>n.publicado).sort((a,b)=> new Date(b.criadoEm) - new Date(a.criadoEm));
+            const avisoCard = homeCards.children[0];
+            if(publicados.length > 0) {
+                const ult = publicados[0];
+                avisoCard.querySelector('h3').textContent = 'Últimos Avisos';
+                avisoCard.querySelector('p').textContent = `${ult.titulo} — ${ult.resumo}`;
+            } else { avisoCard.querySelector('p').textContent = 'Sem avisos publicados no momento.'; }
+            const calCard = homeCards.children[1];
+            const y = new Date().getFullYear(); const map = getHolidayMap(y); const hojeISO = keyISO(new Date());
+            const proximos = Array.from(map.entries()).filter(([k,_])=> k >= hojeISO).sort(([a],[b])=> a.localeCompare(b));
+            if(proximos.length > 0) { const [k, v] = proximos[0]; const [yy,mm,dd] = k.split('-'); calCard.querySelector('p').textContent = `Próximo: ${dd}/${mm}/${yy} — ${v.nome}`; }
+        }
+
+        // ====================================================================
         // INIT
         // ====================================================================
         document.addEventListener('DOMContentLoaded', () => {
@@ -929,9 +1233,33 @@
             for(let i=y-2; i<=y+2; i++) selAno.innerHTML += `<option value="${i}" ${i===y?'selected':''}>${i}</option>`;
 
             document.getElementById('carregarDadosBtn').onclick = preencherIndividual;
-            document.getElementById('filtroLote').oninput = renderListaLote;
+            const filtroLoteEl = document.getElementById('filtroLote'); if(filtroLoteEl) filtroLoteEl.oninput = debounce(renderListaLote, 250);
+            const filtroFeriasEl = document.getElementById('filtroFerias'); if(filtroFeriasEl) filtroFeriasEl.oninput = debounce(renderTabelaFerias, 250);
             document.getElementById('mesSelect').onchange = () => { preencherIndividual(); }; 
             document.getElementById('anoSelect').onchange = () => { preencherIndividual(); }; 
+
+            // Carregar extras persistidos
+            try {
+                const stored = JSON.parse(localStorage.getItem('extrasMap') || '{}');
+                Object.entries(stored).forEach(([k,v])=> appState.extrasMap.set(k, v));
+                renderListaExtras();
+            } catch(e) {}
+
+            // Inicializa Processos
+            loadProcessos();
+            renderListaProcessos();
+            const btnSalvarProc = document.getElementById('btnSalvarProc');
+            if(btnSalvarProc) btnSalvarProc.onclick = cadastrarProcesso;
+
+            // Inicializa Notícias
+            loadNoticias();
+            renderListaNoticias();
+            const btnSalvarNews = document.getElementById('btnSalvarNews');
+            if(btnSalvarNews) btnSalvarNews.onclick = cadastrarNoticia;
+
+            // Preenche campo de planilha
+            const sheetInput = document.getElementById('sheetUrlInput');
+            if(sheetInput) sheetInput.value = SHEET_CSV_URL;
 
             router('home');
         });
