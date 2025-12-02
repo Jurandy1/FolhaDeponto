@@ -402,6 +402,19 @@
 
                 <!-- 3. ABA FERIADOS (ROBUSTA) -->
                 <div id="tab-feriados" class="tab-content hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm text-gray-800">Feriados Oficiais</h3>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-gray-600">Ano</label>
+                            <select id="feriadosAnoSelect" class="border rounded px-2 py-1 text-xs">
+                                <option>2024</option>
+                                <option selected>2025</option>
+                                <option>2026</option>
+                                <option>2027</option>
+                                <option>2028</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Lista Oficial -->
                         <div class="bg-gray-50 p-3 rounded-lg border">
@@ -652,6 +665,7 @@
             const btn = document.getElementById(`tab-btn-${tab}`);
             btn.classList.remove('border-transparent', 'text-gray-500');
             btn.classList.add('border-blue-600', 'text-blue-600');
+            if(tab === 'feriados') renderFeriadosTab();
         }
 
         // ====================================================================
@@ -957,6 +971,28 @@
                 }
                 tbody.appendChild(tr);
             }
+        }
+
+        // ====================================================================
+        // LISTA DE FERIADOS (ABA DEDICADA)
+        // ====================================================================
+        function renderFeriadosTab() {
+            const sel = document.getElementById('feriadosAnoSelect');
+            const ano = Number(sel?.value || new Date().getFullYear());
+            const div = document.getElementById('listaFeriadosOficiais');
+            if(!div) return;
+            const map = getHolidayMap(ano);
+            const items = Array.from(map.entries()).map(([iso, info]) => {
+                const [y,m,d] = iso.split('-');
+                const dt = new Date(Number(y), Number(m)-1, Number(d));
+                return { dt, label: `${pad2(Number(d))}/${pad2(Number(m))} - ${info.nome}`, tipo: info.tipo };
+            }).sort((a,b)=> a.dt - b.dt);
+            let html = '';
+            items.forEach(it => {
+                html += `<div class="flex justify-between border-b py-1"><span>${it.label}</span> <span class="text-[10px] uppercase font-bold ${it.tipo==='feriado'?'text-red-500':'text-yellow-600'}">${it.tipo}</span></div>`;
+            });
+            div.innerHTML = html || '<div class="text-xs text-gray-500">Nenhum feriado listado para o ano selecionado.</div>';
+            if(sel && !sel.onchange) sel.onchange = renderFeriadosTab;
         }
 
         // ====================================================================
