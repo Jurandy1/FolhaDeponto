@@ -65,18 +65,15 @@
         .page {
             width: 210mm;
             min-width: 210mm;
-            height: 296mm; /* Levemente menor que 297mm para evitar overflow */
+            height: 297mm;
             background: var(--bg-paper);
             color: var(--color-text-paper);
-            padding: 5mm 10mm; /* Margens otimizadas para caber tudo */
+            padding: 15mm 20mm; /* Margens padrão ABNT/Oficial */
             box-sizing: border-box;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             margin: 0 auto;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Times New Roman', Times, serif; /* Fonte Oficial para Documentos */
             position: relative;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Corta qualquer coisa que saia da folha */
         }
 
         /* Tabela Folha de Ponto */
@@ -84,22 +81,17 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            border: 1px solid var(--border-paper);
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 11px;
+            border: 2px solid var(--border-paper);
+            font-family: Arial, Helvetica, sans-serif; /* Ponto usa Arial */
         }
         .folha-table td, .folha-table th {
             border: 1px solid var(--border-paper);
-            padding: 1px 3px; /* Padding reduzido */
+            padding: 2px 4px;
+            font-size: 11px;
             vertical-align: middle;
             color: var(--color-text-paper);
             overflow: hidden;
             white-space: nowrap;
-        }
-
-        /* Ajuste de altura para escrita manual */
-        .linha-dia {
-            height: 21px; /* Otimizado para 31 dias caberem na página */
         }
         
         /* Documento de Férias */
@@ -115,7 +107,6 @@
         .input-linha {
             border: none; border-bottom: 1px solid #ccc; background: transparent;
             font-family: inherit; font-size: 11px; font-weight: bold; width: 100%; outline: none;
-            text-transform: uppercase;
         }
         .input-linha:focus { border-bottom-color: #000; background-color: rgba(59, 130, 246, 0.1); }
         td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #3b82f6; }
@@ -124,26 +115,6 @@
         .bg-gray-folha { background-color: #e5e7eb !important; font-weight: bold; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .bg-white-header { background-color: #fff !important; font-weight: bold; text-align: center; }
         .bg-white-cell { background-color: #fff !important; }
-
-        /* Estilo do Rodapé Igual à Foto */
-        .footer-box {
-            border: 1px solid #000;
-            height: 80px; /* Reduzido levemente para garantir fit */
-            vertical-align: top !important;
-            padding: 5px !important;
-            position: relative;
-        }
-        .footer-title {
-            font-weight: bold;
-            font-size: 11px;
-            margin-bottom: 5px;
-        }
-        .footer-date {
-            position: absolute;
-            bottom: 5px;
-            left: 5px;
-            font-size: 11px;
-        }
 
         /* --- TOAST --- */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -157,44 +128,22 @@
         .toast-error { background-color: #ef4444; }
         .toast-info { background-color: #3b82f6; }
 
-        /* --- PRINT STYLES (RIGOROSO) --- */
+        /* --- PRINT STYLES --- */
         @media print {
-            @page {
-                size: A4;
-                margin: 0; /* Remove margens da impressora para controle total */
-            }
-
-            /* Oculta interface do sistema */
-            header, .no-print, #ponto-controls, #toast-container, .theme-toggle { display: none !important; }
+            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle, .view-section:not(#print-context) { display: none !important; }
+            body, html { margin: 0; padding: 0; background: #fff !important; color: #000 !important; }
             
-            /* Reseta estilos básicos */
-            body, html { 
-                margin: 0; padding: 0; 
-                background: #fff !important; color: #000 !important; 
-                width: 100%; height: 100%;
-                overflow: hidden; /* Impede scroll na impressão */
-            }
-            
-            .hidden { display: none !important; }
+            /* Força visibilidade apenas do contexto de impressão atual */
+            #ponto-container, #ferias-print-container { display: block !important; }
             
             .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; }
-            
             .page { 
-                margin: 0 auto; 
-                border: none; 
-                box-shadow: none; 
-                width: 210mm; 
-                height: 297mm; /* Força altura A4 */
-                padding: 10mm 10mm; /* Margem de segurança de impressão */
+                margin: 0; border: none; box-shadow: none; width: 100%; height: 297mm; padding: 15mm 20mm; 
                 page-break-after: always;
-                page-break-inside: avoid;
-                overflow: hidden;
             }
-            
-            /* Força a tabela a caber */
-            .folha-table { width: 100%; }
             .input-linha { border-bottom: none; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .dark body { background-color: #fff !important; color: #000 !important; }
         }
 
         /* Scrollbar */
@@ -315,6 +264,9 @@
                     </button>
                     <button onclick="carregarFerias()" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition">
                         <i class="fas fa-sync-alt" id="icon-refresh-ferias"></i>
+                    </button>
+                    <button onclick="abrirHistoricoGeral()" class="bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition border dark:border-gray-600">
+                        <i class="fas fa-archive"></i> Histórico Geral
                     </button>
                 </div>
             </div>
@@ -463,84 +415,53 @@
             <!-- Folha de Ponto Layout A4 -->
             <div class="page-wrapper no-print:mt-4">
                 <div class="page" id="mainPaper">
-                    <!-- Cabeçalho Principal -->
                     <table class="folha-table">
-                        <tr style="height: 30px;">
-                            <td class="bg-gray-folha" style="width: 75%; font-size: 14px;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td>
-                            <td class="bg-white-header" style="font-size: 11px;">Mês/Ano: <span id="labelMesAno" style="margin-left: 5px; font-weight: normal;">NOV/2025</span></td>
-                        </tr>
-                        <tr style="height: 25px;">
-                            <td colspan="2" class="bg-white-header" style="text-align: left; padding-left: 10px;">Órgão Municipal: Secretaria Municipal da Criança e Assistência Social / SEMCAS</td>
-                        </tr>
-                        <tr style="height: 25px;">
-                            <td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha" style="width: 90%;"></td>
-                            <td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width: 80%;"></td>
-                        </tr>
-                        <tr style="height: 25px;">
-                            <td class="bg-white-cell">Cargo/Função: <input id="inpCargo" class="input-linha" style="width: 80%;"></td>
-                            <td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha" style="width: 80%;"></td>
-                        </tr>
-                         <tr style="height: 25px;">
-                            <td colspan="2" class="bg-white-cell">Unidade Administrativa: <input id="inpLotacao" class="input-linha" style="width: 80%;"></td>
-                        </tr>
+                        <tr><td class="bg-gray-folha titulo-folha" style="width: 70%;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td><td class="bg-white-header"><span id="labelMesAno">NOV/2025</span></td></tr>
+                        <tr><td colspan="2" class="bg-white-header">Secretaria Municipal da Criança e Assistência Social/ SEMCAS</td></tr>
+                        <tr><td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha"></td><td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width:80px"></td></tr>
+                        <tr><td class="bg-white-cell">Cargo: <input id="inpCargo" class="input-linha"></td><td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha"></td></tr>
                     </table>
-
-                    <!-- Tabela de Dias -->
-                    <table class="folha-table" style="margin-top: -1px; width: 100%;">
+                    <table class="folha-table" style="margin-top: -1px;">
                         <colgroup>
-                            <col style="width: 30px;"> <!-- Dia -->
-                            <col style="width: 50px;"> <!-- Hora M -->
-                            <col> <!-- Rubrica M -->
-                            <col style="width: 50px;"> <!-- Hora M -->
-                            <col> <!-- Rubrica M -->
-                            <col style="width: 50px;"> <!-- Hora T -->
-                            <col> <!-- Rubrica T -->
-                            <col style="width: 50px;"> <!-- Hora T -->
-                            <col> <!-- Rubrica T -->
+                            <col class="col-dia">
+                            <col class="col-hora"><col class="col-rubrica">
+                            <col class="col-hora"><col class="col-rubrica">
+                            <col class="col-hora"><col class="col-rubrica">
+                            <col class="col-hora"><col class="col-rubrica">
                         </colgroup>
                         <thead>
-                            <tr class="bg-gray-folha" style="height: 20px;">
-                                <th colspan="9">Horário de Trabalho</th>
+                            <tr class="bg-white-header">
+                                <th rowspan="3">Dia</th>
+                                <th colspan="8">Horário de Trabalho</th>
                             </tr>
-                            <tr class="bg-gray-folha" style="height: 20px;">
-                                <th rowspan="2" style="background-color: #fff;"></th>
+                            <tr class="bg-white-header">
                                 <th colspan="4">Manhã</th>
                                 <th colspan="4">Tarde</th>
                             </tr>
-                            <tr class="bg-white-header" style="height: 35px;">
-                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Entrada:<br><span style="margin-left: 30px;">08:00</span></th>
-                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Saída:<br><span style="margin-left: 30px;">12:00</span></th>
-                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Entrada:<br><span style="margin-left: 30px;">14:00</span></th>
-                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Saída:<br><span style="margin-left: 30px;">18:00</span></th>
+                            <tr class="bg-white-header">
+                                <th colspan="2" style="font-size: 10px;">Entrada:<br>08:00</th>
+                                <th colspan="2" style="font-size: 10px;">Saída:<br>12:00</th>
+                                <th colspan="2" style="font-size: 10px;">Entrada:<br>14:00</th>
+                                <th colspan="2" style="font-size: 10px;">Saída:<br>18:00</th>
                             </tr>
-                            <tr class="bg-gray-folha" style="height: 20px;">
-                                <th>Dia</th>
-                                <th colspan="2">Manhã</th>
-                                <th colspan="2"></th>
-                                <th colspan="2">Tarde</th>
-                                <th colspan="2"></th>
-                            </tr>
-                            <tr class="bg-white-header" style="font-size: 9px; height: 18px;">
+                            <tr class="bg-gray-folha">
                                 <th></th>
-                                <th>Hora</th> <th>Rubrica</th>
-                                <th>Hora</th> <th>Rubrica</th>
-                                <th>Hora</th> <th>Rubrica</th>
-                                <th>Hora</th> <th>Rubrica</th>
+                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
+                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
+                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
+                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
                             </tr>
                         </thead>
                         <tbody id="daysTableBody"></tbody>
                     </table>
-
-                    <!-- Assinaturas / Rodapé -->
-                    <table class="folha-table" style="margin-top: -1px; width: 100%;">
+                    <!-- Assinaturas -->
+                    <table class="footer-table" style="width:100%; border-collapse:collapse; margin-top:-1px;">
                          <tr>
-                            <td class="footer-box" style="width: 50%;">
-                                <div class="footer-title">Chefia Imediata:</div>
-                                <div class="footer-date">São Luís, _______/_______/_____________</div>
+                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
+                                <div style="font-weight: bold; font-size: 11px;">Chefia Imediata:</div>
                             </td>
-                            <td class="footer-box" style="width: 50%;">
-                                <div class="footer-title">Visto (Área de Recursos Humanos):</div>
-                                <div class="footer-date">São Luís, _______/_______/_____________</div>
+                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
+                                <div style="font-weight: bold; font-size: 11px;">Visto RH:</div>
                             </td>
                         </tr>
                     </table>
@@ -605,40 +526,57 @@
     </main>
 
     <!-- MODAL REGISTRO DE FÉRIAS -->
-    <div id="modalFerias" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 shadow-2xl border dark:border-gray-600">
-            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Registrar Férias</h3>
-            <div id="feriasBatchInfo" class="hidden mb-4 bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-300">
-                <i class="fas fa-layer-group"></i> Registrando para <span id="feriasBatchCount" class="font-bold">0</span> servidores.
-            </div>
-            <div class="space-y-4">
-                <div id="divServidorSingle">
-                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Servidor</label>
-                    <input id="feriasNomeInput" class="w-full border rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white" readonly>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Início</label>
-                        <input type="date" id="feriasInicio" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
+            <div id="modalFerias" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 shadow-2xl border dark:border-gray-600">
+                    <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Registrar Férias</h3>
+                    <div id="feriasBatchInfo" class="hidden mb-4 bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-300">
+                        <i class="fas fa-layer-group"></i> Registrando para <span id="feriasBatchCount" class="font-bold">0</span> servidores.
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Duração</label>
-                        <select id="feriasDuracao" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
-                            <option value="30">30 dias</option><option value="20">20 dias</option><option value="15">15 dias</option><option value="10">10 dias</option><option value="5">05 dias</option>
-                        </select>
+                    <div class="space-y-4">
+                        <div id="divServidorSingle">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Servidor</label>
+                            <select id="feriasServidorSelect" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"></select>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Início</label>
+                                <input type="date" id="feriasInicio" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Duração</label>
+                                <select id="feriasDuracao" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
+                                    <option value="30">30 dias</option><option value="20">20 dias</option><option value="15">15 dias</option><option value="10">10 dias</option><option value="5">05 dias</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Tipo</label>
+                                <div class="flex gap-3 text-xs">
+                                    <label class="inline-flex items-center gap-2"><input type="radio" name="feriasTipo" value="programada" class="accent-blue-600" checked> Programada</label>
+                                    <label class="inline-flex items-center gap-2"><input type="radio" name="feriasTipo" value="retroativa" class="accent-blue-600"> Já gozada</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Mês/Ano</label>
+                                <div class="flex gap-2">
+                                    <select id="feriasMes" class="border rounded px-2 py-2 dark:bg-gray-700 dark:text-white">
+                                        <option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                                    </select>
+                                    <input id="feriasAno" type="number" min="2000" max="2100" class="border rounded px-2 py-2 w-20 dark:bg-gray-700 dark:text-white"/>
+                                </div>
+                                <div class="mt-2 text-xs"><label class="inline-flex items-center gap-2"><input type="checkbox" id="feriasUseMesAno" class="accent-blue-600"> Usar Mês/Ano (primeiro dia)</label></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700 flex justify-between text-sm">
+                            <span class="text-gray-600 dark:text-gray-400">Retorno:</span>
+                            <span id="feriasRetornoDisplay" class="font-bold text-gray-800 dark:text-white">--/--/----</span>
+                        </div>
+                        <div class="flex gap-2 justify-end mt-4">
+                            <button onclick="fecharModalFerias()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                            <button onclick="salvarFerias()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Confirmar</button>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700 flex justify-between text-sm">
-                    <span class="text-gray-600 dark:text-gray-400">Retorno:</span>
-                    <span id="feriasRetornoDisplay" class="font-bold text-gray-800 dark:text-white">--/--/----</span>
-                </div>
-                <div class="flex gap-2 justify-end mt-4">
-                    <button onclick="fecharModalFerias()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
-                    <button onclick="salvarFerias()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Confirmar</button>
-                </div>
             </div>
-        </div>
-    </div>
 
     <!-- MODAL CONFIG -->
     <div id="modalConfig" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -651,6 +589,30 @@
                 <button onclick="document.getElementById('modalConfig').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
                 <button onclick="salvarConfig()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Salvar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL HISTÓRICO DE FÉRIAS -->
+    <div id="modalHistorico" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg p-6 shadow-2xl border dark:border-gray-600">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Histórico de Férias</h3>
+            <div id="historicoNome" class="text-sm text-gray-600 dark:text-gray-300 mb-2"></div>
+            <div id="historicoLista" class="max-h-64 overflow-y-auto text-sm"></div>
+            <div class="flex gap-2 justify-end mt-4">
+                <button onclick="fecharHistorico()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL HISTÓRICO GERAL -->
+    <div id="modalHistoricoGeral" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-6 shadow-2xl border dark:border-gray-600">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Histórico Geral de Férias</h3>
+            <div class="flex gap-2 mb-3">
+                <input id="historicoFiltroNome" class="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" placeholder="Filtrar por nome">
+                <button onclick="fecharHistoricoGeral()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Fechar</button>
+            </div>
+            <div id="historicoGeralLista" class="max-h-96 overflow-y-auto text-sm"></div>
         </div>
     </div>
 
@@ -709,6 +671,7 @@
                 custom: JSON.parse(localStorage.getItem('customHolidays') || '[]')
             }
         };
+        let feriasState = { page: 1, perPage: 25, filterStatus: 'todos' };
 
         // --- UTILS ---
         function showToast(msg, type='info') {
@@ -867,6 +830,7 @@
         // --- FÉRIAS ---
         async function carregarFerias() {
             if(!app.data.length) app.data = await fetchCSV();
+            feriasState.page = 1;
             renderTabelaFerias();
         }
 
@@ -907,6 +871,15 @@
                 return { nome, lotacao, ...calc };
             }).filter(i => i.nome);
 
+            // Atualiza contadores do dashboard
+            const counts = { vencida: 0, critico: 0, atencao: 0, emdia: 0 };
+            lista.forEach(i => { if(counts[i.status] !== undefined) counts[i.status]++; });
+            const setText = (id, v) => { const el = document.getElementById(id); if(el) el.innerText = v; };
+            setText('count-vencida', counts.vencida);
+            setText('count-critico', counts.critico);
+            setText('count-atencao', counts.atencao);
+            setText('count-emdia', counts.emdia);
+
             lista = lista.filter(i => {
                 if(filtroNome && !i.nome.toLowerCase().includes(filtroNome)) return false;
                 if(filtroStatus !== 'todos' && i.status !== filtroStatus) return false;
@@ -914,7 +887,17 @@
             });
             lista.sort((a,b) => a.diasRestantes - b.diasRestantes);
 
-            lista.slice(0, 50).forEach(item => {
+            // Paginação
+            const total = lista.length;
+            const per = feriasState.perPage;
+            const pages = Math.max(1, Math.ceil(total / per));
+            if(feriasState.page > pages) feriasState.page = pages;
+            const start = (feriasState.page - 1) * per;
+            const sliced = lista.slice(start, start + per);
+            const pageInfo = document.getElementById('feriasPageInfo');
+            if(pageInfo) pageInfo.innerText = `Página ${feriasState.page} de ${pages} • ${total} registros`;
+
+            sliced.forEach(item => {
                 let badge = '';
                 if(item.status==='vencida') badge = '<span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold">VENCIDA</span>';
                 else if(item.status==='critico') badge = '<span class="px-2 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold">CRÍTICO</span>';
@@ -934,11 +917,22 @@
                         <td class="px-4 py-3 text-center">${badge}</td>
                         <td class="px-4 py-3 text-right">
                             <button onclick="gerarDocumentoFerias('${item.nome}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-bold border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 transition"><i class="fas fa-file-contract"></i> Aviso</button>
+                            <button onclick="abrirHistoricoFerias('${item.nome}')" class="text-xs font-bold text-gray-600 border border-gray-200 px-2 py-1 rounded hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition ml-1"><i class="fas fa-list"></i> Histórico</button>
                         </td>
                     </tr>`;
             });
             updateBatchUI();
         }
+
+        function filterFerias(status) {
+            const sel = document.getElementById('filtroStatusFerias');
+            if(sel) sel.value = status;
+            feriasState.filterStatus = status;
+            feriasState.page = 1;
+            renderTabelaFerias();
+        }
+        function feriasPrev() { if(feriasState.page > 1) { feriasState.page--; renderTabelaFerias(); } }
+        function feriasNext() { feriasState.page++; renderTabelaFerias(); }
 
         // --- BATCH ---
         function toggleAllFerias(master) {
@@ -968,7 +962,13 @@
             document.getElementById('feriasBatchInfo').classList.toggle('hidden', !isBatch);
             document.getElementById('divServidorSingle').classList.toggle('hidden', isBatch);
             if(isBatch) document.getElementById('feriasBatchCount').innerText = app.selectedFerias.size;
-            else { document.getElementById('feriasNomeInput').value = ""; document.getElementById('feriasNomeInput').removeAttribute('readonly'); }
+            else {
+                const sel = document.getElementById('feriasServidorSelect');
+                if(sel) {
+                    const names = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario']).trim()).filter(Boolean))).sort();
+                    sel.innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
+                }
+            }
             
             document.getElementById('feriasInicio').valueAsDate = new Date();
             calcularFimFerias();
@@ -978,25 +978,142 @@
         function calcularFimFerias() {
             const inicio = document.getElementById('feriasInicio').value;
             const dias = parseInt(document.getElementById('feriasDuracao').value);
-            if(inicio) {
-                const dt = new Date(inicio); dt.setDate(dt.getDate() + dias - 1);
+            const useMY = document.getElementById('feriasUseMesAno')?.checked;
+            const mmSel = document.getElementById('feriasMes')?.value;
+            const aaSel = document.getElementById('feriasAno')?.value;
+            let start = inicio;
+            if(useMY && mmSel && aaSel) start = `${aaSel}-${mmSel}-01`;
+            if(start) {
+                const dt = new Date(start); dt.setDate(dt.getDate() + dias - 1);
                 document.getElementById('feriasRetornoDisplay').innerText = dt.toLocaleDateString('pt-BR');
             }
         }
         function salvarFerias() {
-            const inicio = document.getElementById('feriasInicio').value;
+            let inicio = document.getElementById('feriasInicio').value;
             const dias = parseInt(document.getElementById('feriasDuracao').value);
+            const useMY = document.getElementById('feriasUseMesAno')?.checked;
+            const mmSel = document.getElementById('feriasMes')?.value;
+            const aaSel = document.getElementById('feriasAno')?.value;
+            if(useMY && mmSel && aaSel) inicio = `${aaSel}-${mmSel}-01`;
             if(!inicio) return showToast('Selecione data início', 'error');
+            const tipo = Array.from(document.getElementsByName('feriasTipo')).find(r=>r.checked)?.value || 'programada';
             const targets = [];
             if(modalMode === 'batch') app.selectedFerias.forEach(n => targets.push(n));
             else {
-                const n = document.getElementById('feriasNomeInput').value;
-                if(!n) return showToast('Digite o nome', 'error'); targets.push(n);
+                const n = document.getElementById('feriasServidorSelect').value;
+                if(!n) return showToast('Selecione o servidor', 'error'); targets.push(n);
             }
-            targets.forEach(nome => app.feriasLancadas.push({ nome, inicio, dias, registradoEm: new Date().toISOString() }));
-            localStorage.setItem('feriasHistorico', JSON.stringify(app.feriasLancadas));
-            showToast(`${targets.length} férias registradas!`, 'success');
+            const inicioDate = new Date(inicio);
+            const fimDate = new Date(inicio); fimDate.setDate(fimDate.getDate() + dias - 1);
+            const invalids = [];
+            const saved = [];
+            targets.forEach(nome => {
+                const row = app.data.find(r => getField(r, ['nome','servidor','funcionar','funcion','funcionario']) === nome);
+                const adm = row ? getField(row, ['admiss','data']) : '';
+                const calc = calcularSaldo(nome, adm);
+                const limite = calc.limite;
+                if(limite && inicioDate > limite) {
+                    const sug = new Date(limite); sug.setDate(sug.getDate() - dias + 1);
+                    invalids.push({ nome, motivo: 'fora do limite concessivo', sugestao: sug });
+                    return;
+                }
+                if(hasOverlap(nome, inicioDate, fimDate)) {
+                    invalids.push({ nome, motivo: 'conflito com lançamento existente' });
+                    return;
+                }
+                app.feriasLancadas.push({ nome, inicio, dias, tipo, registradoEm: new Date().toISOString() });
+                saved.push(nome);
+            });
+            if(saved.length) {
+                localStorage.setItem('feriasHistorico', JSON.stringify(app.feriasLancadas));
+                showToast(`${saved.length} férias registradas!`, 'success');
+            }
+            if(invalids.length) {
+                const msg = invalids.map(i=>`${i.nome}: ${i.motivo}${i.sugestao?` • sug.: ${i.sugestao.toLocaleDateString('pt-BR')}`:''}`).join('\n');
+                showToast(`Alguns lançamentos inválidos:\n${msg}`, 'error');
+                const sug = invalids.find(i=>i.sugestao)?.sugestao;
+                if(sug) {
+                    const iso = `${sug.getFullYear()}-${String(sug.getMonth()+1).padStart(2,'0')}-${String(sug.getDate()).padStart(2,'0')}`;
+                    const inp = document.getElementById('feriasInicio'); if(inp) inp.value = iso;
+                }
+            }
             fecharModalFerias(); renderTabelaFerias(); limparSelecaoFerias();
+        }
+        function hasOverlap(nome, start, end) {
+            const list = app.feriasLancadas.filter(f => f.nome === nome);
+            for(const f of list) {
+                const s = new Date(f.inicio);
+                const e = new Date(f.inicio); e.setDate(e.getDate() + parseInt(f.dias) - 1);
+                if(!(end < s || start > e)) return true;
+            }
+            return false;
+        }
+
+        function abrirHistoricoFerias(nome) {
+            const lista = app.feriasLancadas.filter(f => f.nome === nome);
+            document.getElementById('historicoNome').innerText = `Servidor: ${nome}`;
+            const cont = document.getElementById('historicoLista');
+            cont.innerHTML = '';
+            if(lista.length === 0) cont.innerHTML = '<div class="text-gray-500 dark:text-gray-400">Sem lançamentos.</div>';
+            else {
+                lista.forEach((f, idx) => {
+                    const di = new Date(f.inicio);
+                    cont.innerHTML += `<div class="flex justify-between items-center border-b py-2">
+                        <div>
+                            <div class="font-bold">${di.toLocaleDateString('pt-BR')} • ${f.dias} dias</div>
+                            <div class="text-xs text-gray-500">Registrado em ${new Date(f.registradoEm).toLocaleString('pt-BR')}</div>
+                        </div>
+                        <button class="text-xs text-red-600 px-2 py-1 border rounded hover:bg-red-50" onclick="removerHistoricoFerias('${nome}', ${idx})">Remover</button>
+                    </div>`;
+                });
+            }
+            document.getElementById('modalHistorico').classList.remove('hidden');
+        }
+        function fecharHistorico() { document.getElementById('modalHistorico').classList.add('hidden'); }
+        function removerHistoricoFerias(nome, indexInFiltered) {
+            const filtered = app.feriasLancadas.filter(f => f.nome === nome);
+            const target = filtered[indexInFiltered];
+            if(!target) return;
+            const idx = app.feriasLancadas.findIndex(f => f.nome === target.nome && f.inicio === target.inicio && f.dias === target.dias && f.registradoEm === target.registradoEm);
+            if(idx >= 0) {
+                app.feriasLancadas.splice(idx,1);
+                localStorage.setItem('feriasHistorico', JSON.stringify(app.feriasLancadas));
+                showToast('Lançamento removido.', 'success');
+                renderTabelaFerias();
+                const nomeAtual = document.getElementById('historicoNome').innerText.replace('Servidor: ','');
+                abrirHistoricoFerias(nomeAtual);
+            }
+        }
+        function abrirHistoricoGeral() {
+            const cont = document.getElementById('historicoGeralLista');
+            const filtro = document.getElementById('historicoFiltroNome');
+            const render = () => {
+                const q = (filtro?.value || '').toLowerCase();
+                const items = app.feriasLancadas
+                    .filter(f => !q || f.nome.toLowerCase().includes(q))
+                    .sort((a,b) => new Date(b.inicio) - new Date(a.inicio));
+                cont.innerHTML = items.map(f => `<div class="flex justify-between items-center border-b py-2">
+                    <div>
+                        <div class="font-bold">${f.nome}</div>
+                        <div class="text-xs">${new Date(f.inicio).toLocaleDateString('pt-BR')} • ${f.dias} dias • ${f.tipo||'programada'}</div>
+                    </div>
+                    <button class="text-xs text-red-600 px-2 py-1 border rounded hover:bg-red-50" onclick="removerHistoricoGeral('${f.nome}','${f.inicio}',${f.dias},'${f.registradoEm}')">Remover</button>
+                </div>`).join('');
+            };
+            if(filtro) filtro.oninput = render;
+            render();
+            document.getElementById('modalHistoricoGeral').classList.remove('hidden');
+        }
+        function fecharHistoricoGeral() { document.getElementById('modalHistoricoGeral').classList.add('hidden'); }
+        function removerHistoricoGeral(nome, inicio, dias, registradoEm) {
+            const idx = app.feriasLancadas.findIndex(f => f.nome === nome && f.inicio === inicio && f.dias === dias && f.registradoEm === registradoEm);
+            if(idx >= 0) {
+                app.feriasLancadas.splice(idx,1);
+                localStorage.setItem('feriasHistorico', JSON.stringify(app.feriasLancadas));
+                showToast('Lançamento removido.', 'success');
+                abrirHistoricoGeral();
+                renderTabelaFerias();
+            }
         }
 
         // --- PONTO LOGIC COMPLETA ---
@@ -1034,10 +1151,10 @@
                  document.getElementById('inpNome').value = getField(row, ['nome','servidor','funcionar','funcion','funcionario']);
                  document.getElementById('inpMatricula').value = getField(row, ['matr']);
                  document.getElementById('inpCargo').value = getField(row, ['cargo']);
-                 document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'SERVIÇO PRESTADO';
-                 document.getElementById('inpLotacao').value = getField(row, ['lotac','unidade']) || 'SUPORTE E LOGISTICA';
+                 document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
              } else document.getElementById('inpNome').value = nome;
              
+             app.currentServidor = nome;
              populateDaysTable(document.getElementById('daysTableBody'), mm, aa);
              showToast('Folha gerada!', 'success');
        }
@@ -1045,17 +1162,13 @@
         function populateDaysTable(tbody, mm, aa) {
             tbody.innerHTML = '';
             const diasNoMes = new Date(aa, Number(mm), 0).getDate();
-            const meses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
-            document.getElementById('labelMesAno').textContent = `${meses[Number(mm)-1]}/${aa}`;
+            document.getElementById('labelMesAno').textContent = `${mm}/${aa}`;
             
-            // Criar um mapa de feriados para recuperar o nome
-            const feriadosList = getHolidayISOList(parseInt(aa));
-            const feriadosMap = new Map(feriadosList.map(h => [h.date, h.nome]));
-
+            const feriadosSet = new Set(getHolidayISOList(parseInt(aa)).map(h=>h.date));
+            
             for(let i=1; i<=31; i++) {
                 const tr = document.createElement('tr');
-                tr.classList.add('linha-dia');
-                
+                tr.style.height = "18px";
                 let diaTexto = i, estilo = "", texto = "", editavel = `contenteditable="true"`, isSpecial = false;
                 
                 if (i <= diasNoMes) {
@@ -1063,13 +1176,13 @@
                     const diaSemana = data.getDay();
                     const keyIso = `${aa}-${String(mm).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                     
-                    if(feriadosMap.has(keyIso)) {
-                        isSpecial = true; 
-                        estilo = "background-color: #fff; font-weight: bold; font-size: 10px; letter-spacing: 1px; color: #000;"; 
-                        texto = feriadosMap.get(keyIso).toUpperCase();
+                    const onVacation = isVacationDay(app.currentServidor, keyIso);
+                    if(feriadosSet.has(keyIso)) {
+                        isSpecial = true; estilo = "background-color: #ffe4e6; color: #991b1b; font-weight: bold; font-size: 9px;"; texto = "FERIADO";
+                    } else if (onVacation) {
+                        isSpecial = true; estilo = "background-color: #fde68a; color: #7c2d12; font-weight: bold; font-size: 9px;"; texto = "FÉRIAS";
                     } else if (diaSemana === 0 || diaSemana === 6) {
-                        isSpecial = true; 
-                        estilo = "background-color: #f3f4f6; color: #000; font-weight: bold; font-size: 10px; letter-spacing:1px;";
+                        isSpecial = true; estilo = "background-color: #e5e7eb; color: #374151; font-weight: bold; font-size: 9px; letter-spacing:1px;";
                         texto = diaSemana === 6 ? "SÁBADO" : "DOMINGO";
                     }
                 } else {
@@ -1077,12 +1190,24 @@
                 }
 
                 if (isSpecial) {
-                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; border-bottom: 1px solid #000; ${estilo}">${texto}</td>`;
+                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; ${estilo}">${texto}</td>`;
                 } else {
                     tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td>`;
                 }
                 tbody.appendChild(tr);
             }
+        }
+        function isVacationDay(nome, iso) {
+            if(!nome) return false;
+            const list = app.feriasLancadas.filter(f => f.nome === nome);
+            if(list.length === 0) return false;
+            for(const f of list) {
+                const s = new Date(f.inicio);
+                const e = new Date(f.inicio); e.setDate(e.getDate() + parseInt(f.dias) - 1);
+                const d = new Date(iso);
+                if(d >= s && d <= e) return true;
+            }
+            return false;
         }
         function renderHolidayList() {
             const yearSel = document.getElementById('feriadosAnoSelect');
@@ -1136,7 +1261,6 @@
                 ['10-12','Nossa Senhora Aparecida'],
                 ['11-02','Finados'],
                 ['11-15','Proclamação da República'],
-                ['11-20','Dia da Consciência Negra'],
                 ['12-25','Natal']
             ].map(([md,n])=>({ date: `${year}-${md}`, nome: n, tipo: 'Nacional' }));
             const easter = easterDate(year);
