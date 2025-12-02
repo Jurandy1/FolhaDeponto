@@ -130,11 +130,10 @@
 
         /* --- PRINT STYLES --- */
         @media print {
-            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle, .view-section:not(#print-context) { display: none !important; }
+            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle, .view-section { display: none !important; }
             body, html { margin: 0; padding: 0; background: #fff !important; color: #000 !important; }
             
-            /* Força visibilidade apenas do contexto de impressão atual */
-            #ponto-container, #ferias-print-container { display: block !important; }
+            .print-active { display: block !important; }
             
             .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; }
             .page { 
@@ -371,7 +370,7 @@
                         <h2 class="text-lg font-bold text-gray-800 dark:text-white"><i class="fas fa-print"></i> Gerador de Folha</h2>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Selecione o servidor e imprima (Papel A4).</p>
                     </div>
-                    <button onclick="window.print()" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-bold"><i class="fas fa-print"></i> Imprimir</button>
+                    <button onclick="printPonto()" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-bold"><i class="fas fa-print"></i> Imprimir</button>
                 </div>
                 <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
                     <button onclick="switchTab('folha')" id="tab-btn-folha" class="tab-btn px-4 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600">Individual</button>
@@ -457,11 +456,15 @@
                     <!-- Assinaturas -->
                     <table class="footer-table" style="width:100%; border-collapse:collapse; margin-top:-1px;">
                          <tr>
-                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
+                            <td class="box-assinatura" style="border:1px solid #000; height:100px; vertical-align:top; padding:5px; width:50%;">
                                 <div style="font-weight: bold; font-size: 11px;">Chefia Imediata:</div>
+                                <div style="margin-top:40px; border-top:1px solid #000; width:80%;"></div>
+                                <div style="font-size:11px; margin-top:6px;">São Luís, <span contenteditable="true" style="display:inline-block; min-width:120px; border-bottom:1px dotted #000;">__/__/____</span></div>
                             </td>
-                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
-                                <div style="font-weight: bold; font-size: 11px;">Visto RH:</div>
+                            <td class="box-assinatura" style="border:1px solid #000; height:100px; vertical-align:top; padding:5px; width:50%;">
+                                <div style="font-weight: bold; font-size: 11px;">Visto (Área de Recursos Humanos):</div>
+                                <div style="margin-top:40px; border-top:1px solid #000; width:80%;"></div>
+                                <div style="font-size:11px; margin-top:6px;">São Luís, <span contenteditable="true" style="display:inline-block; min-width:120px; border-bottom:1px dotted #000;">__/__/____</span></div>
                             </td>
                         </tr>
                     </table>
@@ -1317,9 +1320,9 @@
             document.getElementById('docDataFim').innerText = fim.toLocaleDateString('pt-BR');
             document.getElementById('docDias').innerText = dias;
             
-            document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden'));
-            const pc = document.getElementById('ferias-print-container'); pc.classList.remove('hidden');
-            setTimeout(() => { window.print(); pc.classList.add('hidden'); document.getElementById('ferias-view').classList.remove('hidden'); }, 500);
+            const pc = document.getElementById('ferias-print-container');
+            pc.classList.add('print-active');
+            setTimeout(() => { window.print(); pc.classList.remove('print-active'); }, 200);
         }
 
         // --- INIT ---
@@ -1334,7 +1337,12 @@
         });
 
         // Simple Lote Print for Point (Short version for demo)
-        window.imprimirLote = () => { window.print(); }
+        window.imprimirLote = () => { printPonto(); }
+        function printPonto() {
+            const pc = document.getElementById('ponto-container');
+            pc.classList.add('print-active');
+            setTimeout(() => { window.print(); pc.classList.remove('print-active'); }, 200);
+        }
 
     </script>
 </body>
