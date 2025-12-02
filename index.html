@@ -373,6 +373,7 @@
                 <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
                     <button onclick="switchTab('folha')" id="tab-btn-folha" class="tab-btn px-4 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600">Individual</button>
                     <button onclick="switchTab('lote')" id="tab-btn-lote" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Lote</button>
+                    <button onclick="switchTab('feriados')" id="tab-btn-feriados" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Feriados</button>
                 </div>
                 <div id="tab-folha" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded">
@@ -389,6 +390,22 @@
                     <input id="filtroLote" class="w-full border rounded px-3 py-2 text-sm mb-3 dark:bg-gray-700 dark:text-white" placeholder="Filtrar...">
                     <div id="listaLote" class="h-40 overflow-y-auto bg-white dark:bg-gray-800 border rounded p-2 space-y-1 text-sm"></div>
                     <button onclick="imprimirLote()" class="w-full mt-3 bg-green-600 text-white py-2 rounded font-bold">Gerar Lote</button>
+                </div>
+                <div id="tab-feriados" class="tab-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded mb-3">
+                        <div class="flex items-center gap-2"><input id="chkFerNacional" type="checkbox" class="accent-blue-600"><label for="chkFerNacional" class="text-xs font-bold">Nacionais</label></div>
+                        <div class="flex items-center gap-2"><input id="chkFerEstadual" type="checkbox" class="accent-blue-600"><label for="chkFerEstadual" class="text-xs font-bold">Estaduais (MA)</label></div>
+                        <div class="flex items-center gap-2"><input id="chkFerMunicipal" type="checkbox" class="accent-blue-600"><label for="chkFerMunicipal" class="text-xs font-bold">Municipais (São Luís)</label></div>
+                        <div><label class="text-xs font-bold">Ano</label><select id="feriadosAnoSelect" class="w-full border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white"></select></div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 border rounded p-3">
+                        <div class="flex gap-2 mb-3">
+                            <input type="date" id="customFerData" class="border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white">
+                            <input type="text" id="customFerNome" placeholder="Nome do feriado" class="flex-1 border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white">
+                            <button id="btnAddFeriado" class="bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold">Adicionar</button>
+                        </div>
+                        <div id="holidayListContainer" class="h-64 overflow-y-auto text-sm"></div>
+                    </div>
                 </div>
             </div>
             
@@ -602,7 +619,13 @@
         let app = { 
             data: [], 
             feriasLancadas: JSON.parse(localStorage.getItem('feriasHistorico') || '[]'),
-            selectedFerias: new Set()
+            selectedFerias: new Set(),
+            holidayConfig: {
+                nacional: true,
+                estadual: true,
+                municipal: true,
+                custom: JSON.parse(localStorage.getItem('customHolidays') || '[]')
+            }
         };
 
         // --- UTILS ---
@@ -632,6 +655,7 @@
         function switchTab(t) {
             document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));
             document.getElementById(`tab-${t}`).classList.remove('hidden');
+            if(t==='feriados') renderHolidayList();
         }
 
         function abrirConfiguracoes() {
@@ -940,8 +964,7 @@
             const diasNoMes = new Date(aa, Number(mm), 0).getDate();
             document.getElementById('labelMesAno').textContent = `${mm}/${aa}`;
             
-            // Feriados básicos (Hardcoded para Demo + Robustez)
-            const feriados = [`${aa}-01-01`, `${aa}-05-01`, `${aa}-09-07`, `${aa}-11-02`, `${aa}-11-15`, `${aa}-12-25`, `${aa}-09-08`];
+            const feriadosSet = new Set(getHolidayISOList(parseInt(aa)).map(h=>h.date));
             
             for(let i=1; i<=31; i++) {
                 const tr = document.createElement('tr');
@@ -953,7 +976,7 @@
                     const diaSemana = data.getDay();
                     const keyIso = `${aa}-${String(mm).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                     
-                    if(feriados.includes(keyIso)) {
+                    if(feriadosSet.has(keyIso)) {
                         isSpecial = true; estilo = "background-color: #ffe4e6; color: #991b1b; font-weight: bold; font-size: 9px;"; texto = "FERIADO";
                     } else if (diaSemana === 0 || diaSemana === 6) {
                         isSpecial = true; estilo = "background-color: #e5e7eb; color: #374151; font-weight: bold; font-size: 9px; letter-spacing:1px;";
@@ -971,6 +994,94 @@
                 tbody.appendChild(tr);
             }
         }
+        function renderHolidayList() {
+            const yearSel = document.getElementById('feriadosAnoSelect');
+            const now = new Date();
+            if(yearSel && yearSel.options.length===0) {
+                for(let i=now.getFullYear()-1;i<=now.getFullYear()+2;i++) yearSel.innerHTML += `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
+            }
+            const year = parseInt((yearSel && yearSel.value) || now.getFullYear());
+            const chkN = document.getElementById('chkFerNacional');
+            const chkE = document.getElementById('chkFerEstadual');
+            const chkM = document.getElementById('chkFerMunicipal');
+            if(chkN) chkN.checked = app.holidayConfig.nacional;
+            if(chkE) chkE.checked = app.holidayConfig.estadual;
+            if(chkM) chkM.checked = app.holidayConfig.municipal;
+            const list = getHolidayISOList(year);
+            const cont = document.getElementById('holidayListContainer');
+            if(cont) cont.innerHTML = list.map(h=>`<div class="flex justify-between border-b py-1"><span>${new Date(h.date).toLocaleDateString('pt-BR')}</span><span class="font-bold">${h.nome}</span><span class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700">${h.tipo}</span></div>`).join('');
+            const addBtn = document.getElementById('btnAddFeriado');
+            if(addBtn) addBtn.onclick = () => {
+                const d = document.getElementById('customFerData').value;
+                const n = document.getElementById('customFerNome').value.trim();
+                if(d && n) {
+                    app.holidayConfig.custom.push({ date: d, nome: n });
+                    localStorage.setItem('customHolidays', JSON.stringify(app.holidayConfig.custom));
+                    renderHolidayList();
+                    const tb = document.getElementById('daysTableBody');
+                    const mm = document.getElementById('mesSelect').value;
+                    const aa = document.getElementById('anoSelect').value;
+                    if(tb && mm && aa) populateDaysTable(tb, mm, aa);
+                }
+            };
+            if(yearSel) yearSel.onchange = () => renderHolidayList();
+            if(chkN) chkN.onchange = () => { app.holidayConfig.nacional = chkN.checked; renderHolidayList(); const tb=document.getElementById('daysTableBody'); const mm=document.getElementById('mesSelect').value; const aa=document.getElementById('anoSelect').value; if(tb && mm && aa) populateDaysTable(tb, mm, aa); };
+            if(chkE) chkE.onchange = () => { app.holidayConfig.estadual = chkE.checked; renderHolidayList(); const tb=document.getElementById('daysTableBody'); const mm=document.getElementById('mesSelect').value; const aa=document.getElementById('anoSelect').value; if(tb && mm && aa) populateDaysTable(tb, mm, aa); };
+            if(chkM) chkM.onchange = () => { app.holidayConfig.municipal = chkM.checked; renderHolidayList(); const tb=document.getElementById('daysTableBody'); const mm=document.getElementById('mesSelect').value; const aa=document.getElementById('anoSelect').value; if(tb && mm && aa) populateDaysTable(tb, mm, aa); };
+        }
+        function getHolidayISOList(year) {
+            const out = [];
+            if(app.holidayConfig.nacional) out.push(...nacionalHolidays(year));
+            if(app.holidayConfig.estadual) out.push(...maranhaoHolidays(year));
+            if(app.holidayConfig.municipal) out.push(...saoLuisHolidays(year));
+            if(app.holidayConfig.custom && app.holidayConfig.custom.length) out.push(...app.holidayConfig.custom.map(c=>({ date: c.date, nome: c.nome, tipo: 'Custom' })));
+            return out;
+        }
+        function nacionalHolidays(year) {
+            const fixed = [
+                ['01-01','Confraternização Universal'],
+                ['04-21','Tiradentes'],
+                ['05-01','Dia do Trabalhador'],
+                ['09-07','Independência do Brasil'],
+                ['10-12','Nossa Senhora Aparecida'],
+                ['11-02','Finados'],
+                ['11-15','Proclamação da República'],
+                ['12-25','Natal']
+            ].map(([md,n])=>({ date: `${year}-${md}`, nome: n, tipo: 'Nacional' }));
+            const easter = easterDate(year);
+            const carnaval = addDays(easter, -47);
+            const sextaSanta = addDays(easter, -2);
+            const corpus = addDays(easter, 60);
+            const mov = [
+                { date: toISO(carnaval), nome: 'Carnaval', tipo: 'Nacional' },
+                { date: toISO(sextaSanta), nome: 'Sexta-feira Santa', tipo: 'Nacional' },
+                { date: toISO(easter), nome: 'Páscoa', tipo: 'Nacional' },
+                { date: toISO(corpus), nome: 'Corpus Christi', tipo: 'Nacional' }
+            ];
+            return [...fixed, ...mov];
+        }
+        function maranhaoHolidays(year) {
+            return [
+                { date: `${year}-07-28`, nome: 'Adesão do Maranhão à Independência', tipo: 'Estadual' }
+            ];
+        }
+        function saoLuisHolidays(year) {
+            return [
+                { date: `${year}-09-08`, nome: 'Aniversário de São Luís', tipo: 'Municipal' }
+            ];
+        }
+        function easterDate(Y) {
+            const a = Y % 19; const b = Math.floor(Y/100); const c = Y % 100;
+            const d = Math.floor(b/4); const e = b % 4; const f = Math.floor((b+8)/25);
+            const g = Math.floor((b - f + 1)/3); const h = (19*a + b - d - g + 15) % 30;
+            const i = Math.floor(c/4); const k = c % 4; const L = (32 + 2*e + 2*i - h - k) % 7;
+            const m = Math.floor((a + 11*h + 22*L)/451);
+            const month = Math.floor((h + L - 7*m + 114)/31);
+            const day = ((h + L - 7*m + 114) % 31) + 1;
+            return new Date(Y, month-1, day);
+        }
+        function addDays(dt, n) { const d = new Date(dt); d.setDate(d.getDate()+n); return d; }
+        function toISO(dt) { return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
         
         // --- GERAR DOC FERIAS ---
         function gerarDocumentoFerias(nome) {
