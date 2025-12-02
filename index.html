@@ -156,22 +156,26 @@
         .toast-error { background-color: #ef4444; }
         .toast-info { background-color: #3b82f6; }
 
-        /* --- PRINT STYLES --- */
+        /* --- PRINT STYLES (CORRIGIDO) --- */
         @media print {
-            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle, .view-section:not(#print-context) { display: none !important; }
+            /* Oculta interface do sistema */
+            header, .no-print, #ponto-controls, #toast-container, .theme-toggle { display: none !important; }
+            
+            /* Reseta estilos básicos */
             body, html { margin: 0; padding: 0; background: #fff !important; color: #000 !important; }
             
-            /* Força visibilidade apenas do contexto de impressão atual */
-            #ponto-container, #ferias-print-container { display: block !important; }
+            /* ESSENCIAL: Garante que elementos ocultos na tela (hidden) continuem ocultos na impressão */
+            .hidden { display: none !important; }
             
+            /* Ajusta wrapper da página */
             .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; }
+            
             .page { 
-                margin: 0; border: none; box-shadow: none; width: 100%; height: 295mm; padding: 10mm 15mm; 
+                margin: 0; border: none; box-shadow: none; width: 100%; height: auto; padding: 10mm 15mm; 
                 page-break-after: always;
             }
             .input-linha { border-bottom: none; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .dark body { background-color: #fff !important; color: #000 !important; }
         }
 
         /* Scrollbar */
