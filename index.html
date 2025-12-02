@@ -74,60 +74,244 @@ input {
 
     @page { size: A4; margin: 0; }
 
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        transform: none !important;
+        filter: none !important;
+    }
+
     body {
         margin: 0;
         padding: 0;
-        background: white !important;
+        background: #ffffff !important;
     }
 
     .paper {
         margin: 0;
         width: 210mm !important;
         height: 297mm !important;
+        padding: 10mm !important; /* espelha o estilo da tela */
+    }
+
+    .no-print { display: none !important; }
+
+    /* Tabelas: bordas leves imprimíveis (separate evita sumiço de linhas) */
+    table { 
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+    }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { page-break-inside: avoid; }
+    th, td { 
+        border: 0.6pt solid #000 !important; /* fino e visível no print */
+        /* usa font-size/padding padrão do estilo da tela */
         box-shadow: none !important;
-        padding: 10mm !important;
+        background: #ffffff !important;
     }
 
-    .no-print {
-        display: none !important;
-    }
+    /* Reforça divisórias internas das caixas sem pesar visual */
+    .borda-fixa { border: 1px solid #000 !important; }
+    .borda-t { border-top: 1px solid #000 !important; }
+    .borda-b { border-bottom: 1px solid #000 !important; }
+    .borda-l { border-left: 1px solid #000 !important; }
+    .borda-r { border-right: 1px solid #000 !important; }
 
-    /* Força bordas na impressão */
-    table, th, td, tr {
-        border: 1px solid #000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-    }
-
-    /* Inputs impressos com caixa */
+    /* Inputs impressos mantendo estilo da tela (sem caixa pesada) */
     input {
-        border: 1px solid #000 !important;
-        background: white !important;
-        -webkit-print-color-adjust: exact !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-sizing: border-box !important;
+        padding: 0 1mm !important;
+        height: auto !important;
     }
 
-    /* fundo cinza */
+    /* Linhas horizontais e fundo cinza */
+    hr {
+        border: 0;
+        border-top: 1pt solid #000 !important;
+        height: 0;
+        background: transparent !important;
+    }
     .bg-gray-100, .bg-gray-50, .section-header {
         background-color: #e5e5e5 !important;
     }
+}
+</style>
+<style>
+/* Fix específico para Firefox: usar borda colapsada no print */
+@-moz-document url-prefix() {
+  @media print {
+    table { border-collapse: collapse !important; }
+    th, td {
+      border: 1px solid #000 !important;
+      box-shadow: none !important;
+      background: #ffffff !important;
+      outline: none !important;
+    }
+    .borda-fixa, .borda-t, .borda-b, .borda-l, .borda-r {
+      border-width: 1px !important;
+    }
+    input {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      background: transparent !important;
+      border: none !important;
+    }
+  }
 }
 </style>
 
 </head>
 <body>
 
-<!-- Barra superior -->
-<div class="no-print fixed top-0 left-0 w-full bg-blue-600 text-white p-4 shadow-md z-50 flex justify-between items-center">
+<!-- Barra superior com navegação -->
+<div class="no-print fixed top-0 left-0 w-full bg-blue-600 text-white p-4 shadow-md z-50">
+  <div class="flex items-center justify-between">
     <div>
-        <h1 class="text-lg font-bold">Gerador de Folha de Ponto</h1>
-        <p class="text-xs opacity-80">Preencha e clique em imprimir.</p>
+      <h1 class="text-lg font-bold">Gerador de Folha de Ponto</h1>
+      <p class="text-xs opacity-80">Organizado por abas: Folha, Feriados e Lote.</p>
     </div>
-    <button onclick="window.print()" class="bg-white text-blue-600 font-bold py-2 px-6 rounded hover:bg-gray-100 transition shadow">
-        🖨️ Imprimir
-    </button>
+    <div>
+      <button id="imprimirBtn" onclick="window.print()" class="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100 transition shadow">🖨️ Imprimir</button>
+    </div>
+  </div>
+  <div class="mt-3 flex gap-2">
+    <button id="btnTabFolha" class="px-3 py-1 rounded bg-white text-blue-600 font-bold shadow hover:bg-gray-100">Folha</button>
+    <button id="btnTabFeriados" class="px-3 py-1 rounded bg-blue-500 text-white font-bold shadow hover:bg-blue-400">Feriados</button>
+    <button id="btnTabLote" class="px-3 py-1 rounded bg-blue-500 text-white font-bold shadow hover:bg-blue-400">Impressão em Lote</button>
+  </div>
+  <div class="mt-3">
+    <!-- Aba Folha -->
+    <div id="tabFolha" class="space-y-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <input id="servidorNome" list="servidoresList" class="text-black text-sm px-2 py-1 rounded" placeholder="Digite o nome do servidor e pressione Enter">
+        <datalist id="servidoresList"></datalist>
+        <button id="carregarDadosBtn" class="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100 transition shadow">Gerar folha</button>
+        <div class="flex items-center gap-2">
+          <label class="text-xs opacity-80">Mês da folha:</label>
+          <select id="mesFolhaMesSelect" class="text-black text-sm px-2 py-1 rounded border">
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <select id="mesFolhaAnoSelect" class="text-black text-sm px-2 py-1 rounded border"></select>
+          <input id="mesFolhaInput" type="hidden">
+        </div>
+      </div>
+    </div>
+    <!-- Aba Feriados -->
+    <div id="tabFeriados" class="space-y-3 hidden" style="max-height: 80vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;">
+      <!-- Período dos feriados -->
+      <div class="bg-white border rounded-lg shadow-sm">
+        <div class="px-3 py-2 border-b font-bold text-sm">Período dos feriados</div>
+        <div class="p-3 flex items-center gap-2 flex-wrap">
+          <label class="text-xs opacity-80">Mês:</label>
+          <select id="feriadosMesSelect" class="text-black text-sm px-2 py-1 rounded border">
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <label class="text-xs opacity-80">Ano:</label>
+          <select id="feriadosAnoSelect" class="text-black text-sm px-2 py-1 rounded border"></select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3" style="min-height: 0;">
+        <!-- Card: Adicionar feriado -->
+        <div class="bg-white border rounded-lg shadow-sm">
+          <div class="px-3 py-2 border-b font-bold text-sm">Adicionar feriado</div>
+          <div class="p-3 space-y-3">
+            <div class="flex items-center flex-wrap gap-2">
+              <input id="feriadoDataInput" type="text" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" aria-label="Data do feriado" title="Data do feriado (dd/mm/aaaa)" placeholder="dd/mm/aaaa" class="text-black text-sm px-2 py-1 rounded border">
+              <input id="feriadoNomeInput" type="text" class="text-black text-sm px-2 py-1 rounded border w-72" placeholder="Nome do feriado">
+              <button id="adicionarFeriadoBtn" class="bg-blue-600 text-white font-bold py-1 px-3 rounded hover:bg-blue-700 transition">Adicionar</button>
+            </div>
+            <div>
+              <div class="text-xs opacity-80 mb-1">Lista de feriados adicionados</div>
+              <div id="listaFeriados" class="space-y-1" style="max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Card: Catálogo e importação -->
+        <div class="bg-white border rounded-lg shadow-sm">
+          <div class="px-3 py-2 border-b font-bold text-sm">Catálogo e importação</div>
+          <div class="p-3 space-y-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <button id="buscarFeriadosBtn" class="bg-blue-600 text-white font-bold py-1 px-3 rounded hover:bg-blue-700 transition">Carregar catálogo (nacionais + SLZ)</button>
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1 text-xs"><input id="toggleNat" type="checkbox" checked> Nacionais</label>
+                <label class="flex items-center gap-1 text-xs"><input id="toggleEstMa" type="checkbox" checked> Estaduais (MA)</label>
+                <label class="flex items-center gap-1 text-xs"><input id="toggleMunSlz" type="checkbox" checked> Municipais (São Luís)</label>
+              </div>
+            </div>
+            <label class="text-xs opacity-80 block">Importar (opcional): cada linha no formato "dd/mm/aaaa - Nome"</label>
+            <textarea id="feriadosInput" rows="4" class="text-black text-sm px-2 py-1 rounded border w-full" placeholder="Ex.:\n01/01/2026 - Confraternização Universal\n28/07/2026 - Adesão do MA à Independência\n08/09/2026 - Fundação de São Luís"></textarea>
+            <div>
+              <button id="aplicarFeriadosBtn" class="bg-green-600 text-white font-bold py-1 px-3 rounded hover:bg-green-700 transition">Aplicar feriados</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Calendário -->
+      <div class="bg-white border rounded-lg shadow-sm">
+        <div class="px-3 py-2 border-b text-sm"><span class="opacity-80">Calendário de </span><span id="calHeader" class="font-bold"></span></div>
+        <div class="p-3">
+          <div id="calendarioFeriados" class="grid grid-cols-7 gap-1 text-xs sm:text-sm"></div>
+        </div>
+      </div>
+      <!-- Feriados do mês -->
+      <div class="bg-white border rounded-lg shadow-sm">
+        <div class="px-3 py-2 border-b font-bold text-sm">Feriados do mês (aplicados automaticamente)</div>
+        <div class="p-3 space-y-3">
+          <div id="catalogoFeriadosMes" class="space-y-1" style="max-height: 50vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y;"></div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="text-xs opacity-80">Adicionar ponto facultativo neste mês:</label>
+            <select id="pfDiaSelect" class="text-black text-sm px-2 py-1 rounded border"></select>
+            <input id="pfNomeInput" type="text" class="text-black text-sm px-2 py-1 rounded border w-64" value="Ponto Facultativo">
+            <button id="adicionarPFBtn" class="bg-purple-600 text-white font-bold py-1 px-3 rounded hover:bg-purple-700 transition">Adicionar PF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Aba Lote -->
+    <div id="tabLote" class="space-y-2 hidden">
+      <div class="flex items-center gap-2 mb-2">
+        <input id="multiSearch" class="border px-2 py-1 text-sm w-96 text-black" placeholder="Filtrar nomes">
+        <button id="selecionarTodosBtn" class="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100 transition shadow">Selecionar todos</button>
+        <button id="limparSelecaoBtn" class="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100 transition shadow">Limpar seleção</button>
+        <span id="multiCount" class="text-xs opacity-90">Selecionados: 0</span>
+        <button id="imprimirLoteBtn" class="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100 transition shadow">Gerar e imprimir lote</button>
+      </div>
+      <div id="multiSelectList" class="bg-white text-black rounded shadow max-h-64 overflow-auto p-3 space-y-1"></div>
+    </div>
+  </div>
 </div>
 
-<div class="h-20 no-print"></div>
+<div class="h-28 no-print"></div>
 
 <div class="paper">
 
@@ -142,73 +326,55 @@ input {
     <!-- Conteúdo principal -->
     <div class="borda-fixa">
 
-        <!-- EMPREGADOR -->
-        <div class="section-header borda-b">DADOS DO EMPREGADOR</div>
+        <!-- DADOS DO SERVIDOR -->
+        <div class="section-header borda-b">DADOS DO SERVIDOR</div>
 
         <div class="text-xs">
-
             <!-- Linha 1 -->
             <div class="flex borda-b">
-                <div class="w-2/3 flex p-1 borda-r items-center">
-                    <span class="font-bold mr-1">Nome:</span>
-                    <input type="text">
+                <div class="w-1/5 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">Lotação:</span>
+                    <input type="text" name="lotacao">
                 </div>
-                <div class="w-1/3 flex p-1 items-center">
-                    <span class="font-bold mr-1">CPF:</span>
-                    <input type="text">
+                <div class="w-1/5 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">Matricula:</span>
+                    <input type="text" name="matricula">
+                </div>
+                <div class="w-3/5 flex p-1 items-center">
+                    <span class="font-bold mr-1">Funcionário:</span>
+                    <input type="text" name="funcionario" style="width: 100%;">
                 </div>
             </div>
 
             <!-- Linha 2 -->
-            <div class="flex borda-b p-1 items-center">
-                <span class="font-bold mr-1">Endereço:</span>
-                <input type="text">
+            <div class="flex borda-b">
+                <div class="w-1/5 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">Ano:</span>
+                    <input type="text" name="ano">
+                </div>
+                <div class="w-1/5 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">Mês:</span>
+                    <input type="text" name="mes">
+                </div>
+                <div class="w-2/5 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">Cargo Origem:</span>
+                    <input type="text" name="cargo_origem">
+                </div>
+                <div class="w-1/5 flex p-1 items-center">
+                    <span class="font-bold mr-1">Horas Semanais:</span>
+                    <input type="text" name="horas_semanais">
+                </div>
             </div>
 
             <!-- Linha 3 -->
             <div class="flex borda-b">
-                <div class="w-2/3 flex p-1 borda-r items-center">
-                    <span class="font-bold mr-1">Cidade:</span>
-                    <input type="text">
+                <div class="w-1/2 flex p-1 borda-r items-center">
+                    <span class="font-bold mr-1">CPF:</span>
+                    <input type="text" name="cpf">
                 </div>
-                <div class="w-1/6 flex p-1 borda-r items-center">
-                    <span class="font-bold mr-1">Estado:</span>
-                    <input type="text">
-                </div>
-                <div class="w-1/6 flex p-1 items-center">
-                    <span class="font-bold mr-1">CEP:</span>
-                    <input type="text">
-                </div>
-            </div>
-
-            <!-- Linha 4 -->
-            <div class="flex p-1 items-center">
-                <span class="font-bold mr-1">Bairro:</span>
-                <input type="text">
-            </div>
-        </div>
-
-        <!-- EMPREGADO -->
-        <div class="section-header borda-t borda-b">DADOS DO EMPREGADO</div>
-
-        <div class="text-xs">
-            <div class="flex borda-b p-1 items-center">
-                <span class="font-bold mr-1">Nome:</span>
-                <input type="text">
-            </div>
-
-            <div class="flex borda-b">
-                <div class="w-5/12 flex p-1 borda-r items-center">
-                    <span class="font-bold mr-1">Carteira de trabalho nº:</span>
-                    <input type="text">
-                </div>
-                <div class="w-2/12 flex p-1 borda-r items-center">
-                    <span class="font-bold mr-1">Série:</span>
-                    <input type="text">
-                </div>
-                <div class="w-5/12 flex p-1 items-center">
-                    <span class="font-bold mr-1">Cargo:</span>
-                    <input type="text">
+                <div class="w-1/2 flex p-1 items-center">
+                    <span class="font-bold mr-1">Admissão:</span>
+                    <input type="text" name="admissao" placeholder="dd/mm/aaaa">
                 </div>
             </div>
         </div>
@@ -269,13 +435,48 @@ input {
 
 </div>
 
+<!-- Container temporário para impressão em lote -->
+<div id="printContainer" class="hidden"></div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('daysTableBody');
+    const servidorInput = document.getElementById('servidorNome');
+    const servidoresList = document.getElementById('servidoresList');
+    const carregarBtn = document.getElementById('carregarDadosBtn');
+    const mesFolhaInput = document.getElementById('mesFolhaInput');
+    const mesFolhaMesSelect = document.getElementById('mesFolhaMesSelect');
+    const mesFolhaAnoSelect = document.getElementById('mesFolhaAnoSelect');
+    const multiList = document.getElementById('multiSelectList');
+    const multiSearch = document.getElementById('multiSearch');
+    const selecionarTodosBtn = document.getElementById('selecionarTodosBtn');
+    const limparSelecaoBtn = document.getElementById('limparSelecaoBtn');
+    const multiCount = document.getElementById('multiCount');
+    const imprimirLoteBtn = document.getElementById('imprimirLoteBtn');
+    const printContainer = document.getElementById('printContainer');
+    const feriadosInput = document.getElementById('feriadosInput');
+    const aplicarFeriadosBtn = document.getElementById('aplicarFeriadosBtn');
+    const buscarFeriadosBtn = document.getElementById('buscarFeriadosBtn');
+    const calendarioFeriados = document.getElementById('calendarioFeriados');
+    const calHeader = document.getElementById('calHeader');
+    const feriadosMesSelect = document.getElementById('feriadosMesSelect');
+    const feriadosAnoSelect = document.getElementById('feriadosAnoSelect');
+    // Feriados UI
+    const feriadoDataInput = document.getElementById('feriadoDataInput');
+    const feriadoNomeInput = document.getElementById('feriadoNomeInput');
+    const adicionarFeriadoBtn = document.getElementById('adicionarFeriadoBtn');
+    const listaFeriados = document.getElementById('listaFeriados');
+    // Abas
+    const btnTabFolha = document.getElementById('btnTabFolha');
+    const btnTabFeriados = document.getElementById('btnTabFeriados');
+    const btnTabLote = document.getElementById('btnTabLote');
+    const tabFolha = document.getElementById('tabFolha');
+    const tabFeriados = document.getElementById('tabFeriados');
+    const tabLote = document.getElementById('tabLote');
 
+    // Popula tabela de dias (1..31)
     for (let i = 1; i <= 31; i++) {
         const day = String(i).padStart(2, "0");
-
         const row = document.createElement("tr");
         row.innerHTML = `
             <td class="font-bold bg-gray-50">${day}</td>
@@ -287,9 +488,1011 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><input type="text" class="text-center"></td>
             <td><input type="text" class="text-center"></td>
         `;
-        
         tbody.appendChild(row);
     }
+
+    // Configuração da planilha (link CSV publicado fornecido)
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjyCxbgnAsHpVZsAzU_VzGi7D-TXnaPciKUWudnp5thY6N53R8laj-aWB8IF_pQPCTevKdOro8rGAM/pub?output=csv';
+
+    let registros = [];
+
+    async function carregarPlanilha() {
+        try {
+            const resp = await fetch(SHEET_CSV_URL);
+            const csv = await resp.text();
+            registros = parseCSV(csv);
+            // Mapa de nome -> registro para exibir infos na seleção múltipla
+            registroPorNome = new Map();
+            registros.forEach(r => {
+                const nomeKey = (r['Funcionário'] || r['Funcionario'] || '').trim().toLowerCase();
+                if (nomeKey) registroPorNome.set(nomeKey, r);
+            });
+            // Monta lista de nomes a partir de 'Funcionário' ou 'Funcionario'
+            const nomes = registros
+                .map(r => (r['Funcionário'] || r['Funcionario'] || '').trim())
+                .filter(Boolean);
+            // Remove duplicados (case-insensitive) e ordena
+            const seen = new Set();
+            const unicos = [];
+            for (const n of nomes) {
+                const key = n.toLowerCase();
+                if (!seen.has(key)) { seen.add(key); unicos.push(n); }
+            }
+            unicos.sort((a, b) => a.localeCompare(b, 'pt', { sensitivity: 'base' }));
+            popularDatalist(unicos);
+        } catch (e) {
+            console.warn('Falha ao carregar planilha. Verifique se foi publicada como CSV e se o ID/GID estão corretos.', e);
+        }
+    }
+
+    function parseCSVLine(line) {
+        const out = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    cur += '"';
+                    i++; // escape ""
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === ',' && !inQuotes) {
+                out.push(cur);
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        out.push(cur);
+        return out.map(s => s.trim());
+    }
+    function parseCSV(text) {
+        const raw = text.replace(/^\uFEFF/, ''); // remove BOM
+        const lines = raw.split(/\r?\n/).filter(l => l.trim().length);
+        if (!lines.length) return [];
+        const headers = parseCSVLine(lines[0]).map(h => h.trim());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cols = parseCSVLine(lines[i]);
+            const obj = {};
+            headers.forEach((h, idx) => obj[h] = (cols[idx] || '').replace(/^"|"$/g, '').trim());
+            rows.push(obj);
+        }
+        return rows;
+    }
+
+    function popularDatalist(nomes) {
+        servidoresList.innerHTML = '';
+        nomes.forEach(nome => {
+            const opt = document.createElement('option');
+            opt.value = nome;
+            servidoresList.appendChild(opt);
+        });
+        popularMultiSelect(nomes);
+    }
+
+    // Abas UI
+    function showTab(tab) {
+        tabFolha.classList.toggle('hidden', tab !== 'folha');
+        tabFeriados.classList.toggle('hidden', tab !== 'feriados');
+        tabLote.classList.toggle('hidden', tab !== 'lote');
+        // Destaque botões
+        const active = 'bg-white text-blue-600';
+        const inactive = 'bg-blue-500 text-white';
+        btnTabFolha.className = `px-3 py-1 rounded font-bold shadow hover:bg-gray-100 transition ${tab === 'folha' ? active : inactive}`;
+        btnTabFeriados.className = `px-3 py-1 rounded font-bold shadow hover:bg-blue-400 transition ${tab === 'feriados' ? active : inactive}`;
+        btnTabLote.className = `px-3 py-1 rounded font-bold shadow hover:bg-blue-400 transition ${tab === 'lote' ? active : inactive}`;
+    }
+    btnTabFolha.addEventListener('click', () => showTab('folha'));
+    btnTabFeriados.addEventListener('click', () => showTab('feriados'));
+    btnTabLote.addEventListener('click', () => showTab('lote'));
+    showTab('folha');
+
+    // Multi-select
+    let nomesCache = [];
+    let selectedNames = new Set();
+    let registroPorNome = new Map();
+    function updateMultiCount() {
+        multiCount.textContent = `Selecionados: ${selectedNames.size}`;
+    }
+    function popularMultiSelect(nomes) {
+        nomesCache = nomes.slice();
+        multiList.innerHTML = '';
+        nomes.forEach((n, idx) => {
+            const id = `multi_${idx}`;
+            const div = document.createElement('div');
+            const reg = registroPorNome.get((n || '').toLowerCase());
+            const infoLot = reg ? (reg['Lotação'] || reg['Lotacao'] || '') : '';
+            const infoMat = reg ? (reg['Matrícula'] || reg['Matricula'] || '') : '';
+            const infoText = [infoLot, infoMat ? `Mat: ${infoMat}` : ''].filter(Boolean).join(' • ');
+            const checked = selectedNames.has((n || '').toLowerCase()) ? 'checked' : '';
+            div.innerHTML = `
+                <label class="flex items-center justify-between gap-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" value="${n}" id="${id}" ${checked}>
+                        <span class="font-medium">${n}</span>
+                    </div>
+                    <div class="text-xs opacity-70">${infoText}</div>
+                </label>`;
+            multiList.appendChild(div);
+            const cb = div.querySelector('input[type="checkbox"]');
+            cb.addEventListener('change', () => {
+                const key = (n || '').toLowerCase();
+                if (cb.checked) selectedNames.add(key); else selectedNames.delete(key);
+                updateMultiCount();
+            });
+        });
+        updateMultiCount();
+    }
+    multiSearch.addEventListener('input', () => {
+        const q = multiSearch.value.trim().toLowerCase();
+        const filtrados = nomesCache.filter(n => n.toLowerCase().includes(q));
+        popularMultiSelect(filtrados);
+    });
+    selecionarTodosBtn.addEventListener('click', () => {
+        nomesCache.forEach(n => selectedNames.add((n || '').toLowerCase()));
+        popularMultiSelect(nomesCache);
+    });
+    limparSelecaoBtn.addEventListener('click', () => {
+        selectedNames.clear();
+        popularMultiSelect(nomesCache);
+    });
+
+    function setValue(name, value) {
+        const el = document.querySelector(`input[name="${name}"]`);
+        if (el) el.value = value || '';
+    }
+    function setValueScoped(root, name, value) {
+        const el = root.querySelector(`input[name="${name}"]`);
+        if (el) el.value = value || '';
+    }
+
+    // Monta tabela de dias para o mês/ano, marcando Sábado/Domingo como linha mesclada
+    function montarTabelaDias(root, mes, ano) {
+        const tbodyEl = root.querySelector('#daysTableBody');
+        if (!tbodyEl) return;
+        const mm = Number(mes);
+        const aa = Number(ano);
+        if (!mm || !aa) return;
+        const diasNoMes = new Date(aa, mm, 0).getDate();
+        tbodyEl.innerHTML = '';
+        for (let d = 1; d <= diasNoMes; d++) {
+            const data = new Date(aa, mm - 1, d);
+            const dow = data.getDay(); // 0=Domingo, 6=Sábado
+            const day = String(d).padStart(2, '0');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="font-bold bg-gray-50">${day}</td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+                <td><input type="text" class="text-center"></td>
+            `;
+            tbodyEl.appendChild(row);
+
+            // Sábados e domingos: mescla células e coloca rótulo
+            if (dow === 0 || dow === 6) {
+                const label = dow === 0 ? 'DOMINGO' : 'SÁBADO';
+                const infoTd = document.createElement('td');
+                infoTd.setAttribute('colspan', '7');
+                infoTd.className = 'text-center font-bold';
+                infoTd.textContent = label;
+                const cels = Array.from(row.querySelectorAll('td'));
+                for (let i = cels.length - 1; i >= 1; i--) {
+                    row.removeChild(cels[i]);
+                }
+                row.appendChild(infoTd);
+                row.classList.add('bg-gray-100');
+                row.setAttribute('data-weekend-aplicado', '1');
+            }
+        }
+    }
+
+    // Catálogo de feriados conhecidos (nacionais + municipais São Luís)
+    let catalogoFeriados = new Map(); // yyyy-mm-dd -> nome
+    function getMunicipaisSaoLuis(ano) {
+        // Baseado em fontes públicas (G1, FAMEM) — ver notas
+        return [
+            { key: `${ano}-06-29`, nome: 'Dia de São Pedro (Municipal - São Luís)' },
+            { key: `${ano}-09-08`, nome: 'Aniversário/Fundação de São Luís (Municipal)' },
+            { key: `${ano}-12-08`, nome: 'Nossa Senhora da Conceição (Municipal - São Luís)' },
+        ];
+    }
+    async function buscarFeriadosNacionais(ano) {
+        try {
+            const resp = await fetch(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
+            if (!resp.ok) throw new Error('Falha ao buscar feriados nacionais');
+            const data = await resp.json();
+            return Array.isArray(data) ? data.map(h => ({ key: h.date, nome: h.name })) : [];
+        } catch (e) {
+            console.warn('Erro ao buscar feriados nacionais:', e);
+            return [];
+        }
+    }
+    // Fallback local para gerar feriados nacionais de um ano (fixos + móveis)
+    function computusPascoaAno(ano) {
+        // Algoritmo de Meeus/Jones/Butcher
+        const a = ano % 19;
+        const b = Math.floor(ano / 100);
+        const c = ano % 100;
+        const d = Math.floor(b / 4);
+        const e = b % 4;
+        const f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3);
+        const h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4);
+        const k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const month = Math.floor((h + l - 7 * m + 114) / 31); // 3=Março, 4=Abril
+        const day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(ano, month - 1, day);
+    }
+    function addDays(date, days) {
+        const d = new Date(date.getTime());
+        d.setDate(d.getDate() + days);
+        return d;
+    }
+    function fmtKey(d) {
+        const aa = d.getFullYear();
+        const mm = String(d.getMonth()+1).padStart(2,'0');
+        const dd = String(d.getDate()).padStart(2,'0');
+        return `${aa}-${mm}-${dd}`;
+    }
+    function gerarFeriadosNacionaisLocal(ano) {
+        const pascoa = computusPascoaAno(ano);
+        const carnavalSeg = addDays(pascoa, -48);
+        const carnavalTer = addDays(pascoa, -47);
+        const cinzas = addDays(pascoa, -46);
+        const sextaPaixao = addDays(pascoa, -2);
+        const corpusChristi = addDays(pascoa, 60);
+        const fixos = [
+            { key: `${ano}-01-01`, nome: 'Confraternização Universal (Nacional)' },
+            { key: `${ano}-04-21`, nome: 'Tiradentes (Nacional)' },
+            { key: `${ano}-05-01`, nome: 'Dia do Trabalho (Nacional)' },
+            { key: `${ano}-09-07`, nome: 'Independência do Brasil (Nacional)' },
+            { key: `${ano}-10-12`, nome: 'Nossa Senhora Aparecida (Nacional)' },
+            { key: `${ano}-11-02`, nome: 'Finados (Nacional)' },
+            { key: `${ano}-11-15`, nome: 'Proclamação da República (Nacional)' },
+            { key: `${ano}-11-20`, nome: 'Dia da Consciência Negra (Nacional)' },
+            { key: `${ano}-12-25`, nome: 'Natal (Nacional)' },
+        ];
+        const moveis = [
+            { key: fmtKey(carnavalSeg), nome: 'Carnaval (Segunda) (Nacional)' },
+            { key: fmtKey(carnavalTer), nome: 'Carnaval (Terça) (Nacional)' },
+            { key: fmtKey(cinzas), nome: 'Quarta-feira de Cinzas (Nacional)' },
+            { key: fmtKey(sextaPaixao), nome: 'Sexta-feira da Paixão (Nacional)' },
+            { key: fmtKey(pascoa), nome: 'Páscoa (Nacional)' },
+            { key: fmtKey(corpusChristi), nome: 'Corpus Christi (Nacional)' },
+        ];
+        return [...fixos, ...moveis];
+    }
+    function getEstaduaisMA(ano) {
+        return [
+            { key: `${ano}-07-28`, nome: 'Adesão do Maranhão à Independência (Estadual)' },
+        ];
+    }
+    async function atualizarCatalogoFeriados(ano) {
+        const includeNat = document.getElementById('toggleNat')?.checked ?? true;
+        const includeEst = document.getElementById('toggleEstMa')?.checked ?? true;
+        const includeMun = document.getElementById('toggleMunSlz')?.checked ?? true;
+        let nacionais = [];
+        if (includeNat) {
+            nacionais = await buscarFeriadosNacionais(ano);
+            if (!nacionais || !nacionais.length) {
+                nacionais = gerarFeriadosNacionaisLocal(ano);
+            }
+        }
+        const estaduais = includeEst ? getEstaduaisMA(ano) : [];
+        const municipais = includeMun ? getMunicipaisSaoLuis(ano) : [];
+        catalogoFeriados = new Map();
+        [...nacionais, ...estaduais, ...municipais].forEach(h => {
+            const k = h.key.length === 10 ? h.key : String(h.key).slice(0,10);
+            catalogoFeriados.set(k, h.nome);
+        });
+    }
+
+    function nomeMesPT(m) {
+        const nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        return nomes[m-1] || '';
+    }
+    function renderCalendario(mes, ano) {
+        if (!calendarioFeriados) return;
+        const mm = Number(mes);
+        const aa = Number(ano);
+        if (!mm || !aa) return;
+        calendarioFeriados.innerHTML = '';
+        if (calHeader) calHeader.textContent = `${nomeMesPT(mm)} de ${aa}`;
+        // Cabeçalho dos dias da semana (Dom a Sáb - padrão Brasil)
+        const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        diasSemana.forEach(d => {
+            const h = document.createElement('div');
+            h.className = 'text-center font-bold opacity-80';
+            h.textContent = d;
+            calendarioFeriados.appendChild(h);
+        });
+        const primeiroDia = new Date(aa, mm-1, 1);
+        const offset = primeiroDia.getDay(); // 0=Dom (mantém semana iniciando no Domingo)
+        for (let i = 0; i < offset; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'border min-h-[36px]';
+            calendarioFeriados.appendChild(empty);
+        }
+        const diasNoMes = new Date(aa, mm, 0).getDate();
+        for (let d = 1; d <= diasNoMes; d++) {
+            const dd = String(d).padStart(2,'0');
+            const key = `${aa}-${String(mm).padStart(2,'0')}-${dd}`;
+            const cell = document.createElement('button');
+            cell.className = 'border rounded px-1 py-2 text-left hover:bg-blue-50 transition';
+            const nome = catalogoFeriados.get(key);
+            cell.innerHTML = `<div class="font-bold text-xs">${dd}</div>${nome ? `<div class="text-[11px] text-blue-700">${nome}</div>` : ''}`;
+            if (nome) cell.classList.add('bg-blue-100');
+            cell.addEventListener('click', () => {
+                // Preenche os inputs de feriado com este dia em formato BR e nome (se houver)
+                const br = `${dd}/${String(mm).padStart(2,'0')}/${aa}`;
+                if (feriadoDataInput) feriadoDataInput.value = br;
+                if (feriadoNomeInput && nome) feriadoNomeInput.value = nome;
+            });
+            calendarioFeriados.appendChild(cell);
+        }
+    }
+
+    function aplicarMesFolha(mm, aa) {
+        const paper = document.querySelector('.paper');
+        if (!paper || !mm || !aa) return;
+        setValue('mes', String(mm).padStart(2,'0'));
+        setValue('ano', String(aa));
+        const tituloInput = document.querySelector('div.flex input[placeholder="EX: 01/2024"]');
+        if (tituloInput) tituloInput.value = `${String(mm).padStart(2,'0')}/${String(aa)}`;
+        montarTabelaDias(paper, mm, aa);
+        aplicarFeriadosNaPagina(paper, mm, aa);
+        renderCalendario(mm, aa);
+    }
+
+    // Inicialização e binding dos selects de Mês/Ano da folha
+    if (mesFolhaInput && mesFolhaMesSelect && mesFolhaAnoSelect) {
+        const now = new Date();
+        // Popula anos (faixa: atual-3 .. atual+3)
+        const yStart = now.getFullYear() - 3;
+        const yEnd = now.getFullYear() + 3;
+        for (let y = yStart; y <= yEnd; y++) {
+            const opt = document.createElement('option');
+            opt.value = String(y);
+            opt.textContent = String(y);
+            mesFolhaAnoSelect.appendChild(opt);
+        }
+        // Define valores iniciais
+        mesFolhaMesSelect.value = String(now.getMonth()+1).padStart(2,'0');
+        mesFolhaAnoSelect.value = String(now.getFullYear());
+        mesFolhaInput.value = `${mesFolhaAnoSelect.value}-${mesFolhaMesSelect.value}`;
+
+        async function aplicarPorSelect() {
+            const yy = Number(mesFolhaAnoSelect.value);
+            const mm = Number(mesFolhaMesSelect.value);
+            mesFolhaInput.value = `${yy}-${String(mm).padStart(2,'0')}`;
+            await atualizarCatalogoFeriados(yy);
+            aplicarMesFolha(mm, yy);
+        }
+        mesFolhaMesSelect.addEventListener('change', aplicarPorSelect);
+        mesFolhaAnoSelect.addEventListener('change', aplicarPorSelect);
+
+        // Listener para atualizações programáticas que usam o hidden
+        mesFolhaInput.addEventListener('change', async () => {
+            const [yy, mm] = mesFolhaInput.value.split('-');
+            // Mantém selects sincronizados
+            mesFolhaMesSelect.value = String(mm).padStart(2,'0');
+            mesFolhaAnoSelect.value = String(yy);
+            await atualizarCatalogoFeriados(Number(yy));
+            aplicarMesFolha(Number(mm), Number(yy));
+        });
+        // Dispara inicial
+        aplicarPorSelect();
+    }
+
+    if (buscarFeriadosBtn) buscarFeriadosBtn.addEventListener('click', async () => {
+        // Usa ano do mês da folha
+        if (!mesFolhaInput || !mesFolhaInput.value) { alert('Selecione o mês da folha.'); return; }
+        const [yy, mm] = mesFolhaInput.value.split('-');
+        await atualizarCatalogoFeriados(Number(yy));
+        renderCalendario(Number(mm), Number(yy));
+        alert('Feriados nacionais e municipais (São Luís) carregados para o ano selecionado.');
+    });
+
+    function normaliza(s) { return String(s || '').trim().toLowerCase(); }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function normalizeYear(y) {
+        const yy = Number(y);
+        if (String(y).length === 2) return 2000 + yy; // converte 2 dígitos para 2000+
+        return yy;
+    }
+    function excelSerialToDate(serialNumber) {
+        // Base do Google Sheets/Excel: 1899-12-30
+        const base = new Date(Date.UTC(1899, 11, 30));
+        const days = Math.floor(serialNumber);
+        const ms = days * 24 * 60 * 60 * 1000;
+        return new Date(base.getTime() + ms);
+    }
+    function formatDateToBR(val) {
+        const s = String(val || '').trim();
+        if (!s) return '';
+        // Trata valores numéricos como seriais de planilha, incluindo milhares e decimais
+        // Exemplos: "1112", "1.112", "1112,0"
+        let serialCandidate = null;
+        if (/^\d+$/.test(s)) {
+            serialCandidate = parseFloat(s);
+        } else if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) { // milhares com ponto, decimais com vírgula
+            const cleaned = s.replace(/\./g, '').replace(',', '.');
+            serialCandidate = parseFloat(cleaned);
+        } else if (/^\d+(?:[\.,]\d+)$/.test(s)) { // decimais simples com ponto ou vírgula
+            const normalized = s.replace(',', '.');
+            serialCandidate = parseFloat(normalized);
+        }
+        if (serialCandidate !== null && !isNaN(serialCandidate)) {
+            const d = excelSerialToDate(serialCandidate);
+            if (!isNaN(d.getTime())) {
+                return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+            }
+        }
+        // Tenta separar por não-dígitos para cobrir yyyy-mm-dd, dd/mm/aaaa, yyyy-mm-ddTHH:MM:SS
+        const parts = s.split(/[^0-9]/).filter(Boolean);
+        if (parts.length >= 3) {
+            // Pega só os 3 primeiros números (ano/mês/dia ou dia/mês/ano)
+            const [p1, p2, p3] = parts.slice(0, 3);
+            if (p1.length === 4) { // yyyy, mm, dd
+                const aa = Number(p1);
+                const mm = Number(p2);
+                const dd = Number(p3);
+                return `${pad2(dd)}/${pad2(mm)}/${aa}`;
+            } else { // Assume padrão BR dd/mm/aa(aa)
+                const dd = Number(p1);
+                const mm = Number(p2);
+                const aa = normalizeYear(p3);
+                return `${pad2(dd)}/${pad2(mm)}/${aa}`;
+            }
+        }
+        // Fallback: tenta Date parse
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+            return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+        }
+        return s;
+    }
+
+    function abreviarNomeSeNecessario(nome, maxLen = 40) {
+        const limpo = String(nome || '').trim().replace(/\s+/g, ' ');
+        if (limpo.length <= maxLen) return limpo;
+        const palavras = limpo.split(' ');
+        if (palavras.length <= 2) {
+            return limpo.length > maxLen ? limpo.slice(0, maxLen) : limpo;
+        }
+        const ignorar = new Set(['de','da','do','das','dos','e']);
+        const primeiro = palavras[0];
+        const ultimo = palavras[palavras.length - 1];
+        const meio = palavras.slice(1, -1).map(p => ignorar.has(p.toLowerCase()) ? '' : p.charAt(0).toUpperCase() + '.').filter(Boolean);
+        let resultado = [primeiro, ...meio, ultimo].join(' ');
+        if (resultado.length > maxLen) {
+            // Se ainda excede, encurta removendo iniciais do meio até caber
+            while (resultado.length > maxLen && meio.length) {
+                meio.pop();
+                resultado = [primeiro, ...meio, ultimo].join(' ');
+            }
+        }
+        if (resultado.length > maxLen) {
+            // Último recurso: corta do final mantendo último sobrenome
+            const base = `${primeiro} ${ultimo}`;
+            return base.length > maxLen ? base.slice(0, maxLen) : base;
+        }
+        return resultado;
+    }
+
+    // Feriados com nome
+    let feriadosMap = new Map(); // do texto importado
+    let feriadosMapUI = new Map(); // adicionados pela UI
+    function parseFeriados(str) {
+        feriadosMap = new Map();
+        const items = String(str || '').split(/\n|[,;]+/).map(s => s.trim()).filter(Boolean);
+        items.forEach(s => {
+            // aceita formatos: "dd/mm/aaaa - Nome", "dd/mm/aaaa: Nome", "dd/mm/aaaa Nome"
+            const match = s.match(/(\d{1,2})\D(\d{1,2})\D(\d{2,4})(?:\s*[-: ]\s*(.+))?/);
+            if (!match) return;
+            const dd = Number(match[1]);
+            const mm = Number(match[2]);
+            const anoRaw = match[3];
+            const aa = Number(anoRaw.length === 2 ? (2000 + Number(anoRaw)) : Number(anoRaw));
+            const nome = (match[4] || 'FERIADO').trim();
+            const key = `${aa}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+            feriadosMap.set(key, nome);
+        });
+    }
+    function renderListaFeriados() {
+        if (!listaFeriados) return;
+        listaFeriados.innerHTML = '';
+        const arr = Array.from(feriadosMapUI.entries()).sort((a,b) => a[0].localeCompare(b[0]));
+        arr.forEach(([key, nome]) => {
+            const [y,m,d] = key.split('-');
+            const br = `${d}/${m}/${y}`;
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between bg-white text-black border rounded px-2 py-1';
+            item.innerHTML = `<span class="text-sm"><strong>${br}</strong> — ${nome}</span><button class="text-red-600 text-xs font-bold">Remover</button>`;
+            item.querySelector('button').addEventListener('click', () => {
+                feriadosMapUI.delete(key);
+                renderListaFeriados();
+            });
+            listaFeriados.appendChild(item);
+        });
+    }
+    function parseDateBRorISOToISO(str) {
+        const s = String(str || '').trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+            const [y,m,d] = s.split('-').map(Number);
+            const dt = new Date(y, m-1, d);
+            if (dt.getFullYear() === y && dt.getMonth() === m-1 && dt.getDate() === d) return s;
+            return null;
+        }
+        const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!m) return null;
+        const dd = Number(m[1]);
+        const mm = Number(m[2]);
+        const yy = Number(m[3]);
+        const dt = new Date(yy, mm-1, dd);
+        if (dt.getFullYear() !== yy || dt.getMonth() !== mm-1 || dt.getDate() !== dd) return null;
+        return `${yy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+    }
+    function adicionarFeriadoUI() {
+        const dateRaw = feriadoDataInput && feriadoDataInput.value;
+        const nome = (feriadoNomeInput && feriadoNomeInput.value || '').trim();
+        if (!dateRaw || !nome) { alert('Informe data (dd/mm/aaaa) e nome do feriado.'); return; }
+        const key = parseDateBRorISOToISO(dateRaw);
+        if (!key) { alert('Data inválida. Use dd/mm/aaaa.'); return; }
+        feriadosMapUI.set(key, nome);
+        if (feriadoNomeInput) feriadoNomeInput.value = '';
+        renderListaFeriados();
+    }
+    if (adicionarFeriadoBtn) adicionarFeriadoBtn.addEventListener('click', adicionarFeriadoUI);
+    function aplicarFeriadosNaPagina(root, mm, aa) {
+        const rows = root.querySelectorAll('#daysTableBody tr');
+        rows.forEach((tr) => {
+            const dayCell = tr.querySelector('td:first-child');
+            const dd = dayCell ? dayCell.textContent.trim().padStart(2,'0') : null;
+            if (!dd) return;
+            const key = `${String(aa).padStart(4,'0')}-${String(mm).padStart(2,'0')}-${dd}`;
+            if (feriadosMap.has(key) && !tr.hasAttribute('data-feriado-aplicado')) {
+                const nomeFeriado = feriadosMap.get(key);
+                tr.classList.add('bg-gray-100');
+                // Mescla as células de dados em uma única célula com o nome do feriado
+                const infoTd = document.createElement('td');
+                infoTd.setAttribute('colspan','7');
+                infoTd.className = 'text-center font-bold';
+                infoTd.textContent = `FERIADO: ${nomeFeriado}`;
+                // Remove todas as células exceto a primeira (dia)
+                const cels = Array.from(tr.querySelectorAll('td'));
+                for (let i = cels.length - 1; i >= 1; i--) {
+                    tr.removeChild(cels[i]);
+                }
+                tr.appendChild(infoTd);
+                tr.setAttribute('data-feriado-aplicado','1');
+            }
+        });
+    }
+    aplicarFeriadosBtn.addEventListener('click', () => {
+        parseFeriados(feriadosInput.value);
+        // Combina feriados do texto e da UI
+        const combined = new Map(feriadosMapUI);
+        feriadosMap.forEach((v,k) => combined.set(k,v));
+        feriadosMap = combined;
+        // Aplica na página atual usando mês/ano dos campos
+        const mm = document.querySelector('input[name="mes"]').value;
+        const aa = document.querySelector('input[name="ano"]').value;
+        const paper = document.querySelector('.paper');
+        if (mm && aa && paper) aplicarFeriadosNaPagina(paper, mm, aa);
+        alert('Feriados aplicados.');
+    });
+
+    function preencherPorNome(nome) {
+        if (!registros.length) return;
+        const alvo = normaliza(nome);
+        let row = registros.find(r => normaliza(r['Funcionário'] || r['Funcionario']) === alvo);
+        if (!row) {
+            row = registros.find(r => normaliza(r['Funcionário'] || r['Funcionario']).includes(alvo));
+        }
+        if (!row) {
+            alert('Servidor não encontrado. Verifique o nome digitado.');
+            return;
+        }
+        const nomeCompleto = row['Funcionário'] || row['Funcionario'] || '';
+        const nomeParaCampo = nomeCompleto.length > 60 ? abreviarNomeSeNecessario(nomeCompleto, 55) : nomeCompleto;
+        setValue('funcionario', nomeParaCampo);
+        const funcEl = document.querySelector('input[name="funcionario"]');
+        if (funcEl) {
+            const container = funcEl.parentElement;
+            const len = nomeParaCampo.length;
+            const avail = container ? container.clientWidth - 16 : 300;
+            // estima largura média 0.6 * fontSize por caractere
+            let size = Math.floor(avail / (Math.max(len, 1) * 0.6));
+            size = Math.max(9, Math.min(14, size));
+            funcEl.style.fontSize = `${size}px`;
+            funcEl.style.whiteSpace = 'nowrap';
+            funcEl.style.overflow = 'hidden';
+            funcEl.style.textOverflow = 'clip';
+            funcEl.style.letterSpacing = '0px';
+        }
+        setValue('matricula', row['Matricula'] || row['Matrícula']);
+        setValue('lotacao', row['Lotação'] || row['Lotacao']);
+        // Usa mês/ano escolhidos no seletor, ou cai para os do servidor
+        let aaEscolhido = row['Ano'] || '';
+        let mmEscolhido = row['Mês'] || row['Mes'] || '';
+        if (mesFolhaInput && mesFolhaInput.value) {
+            const [yy, mm] = mesFolhaInput.value.split('-');
+            aaEscolhido = yy;
+            mmEscolhido = mm;
+        }
+        setValue('ano', aaEscolhido);
+        setValue('mes', mmEscolhido);
+        setValue('cargo_origem', row['Cargo Origem']);
+        setValue('horas_semanais', row['Horas Semanais']);
+        setValue('cpf', row['Cpf'] || row['CPF']);
+        const adm = row['Admissão'] || row['Admissao'];
+        setValue('admissao', formatDateToBR(adm));
+
+        // Preenche título MÊS/ANO
+        const tituloInput = document.querySelector('div.flex input[placeholder="EX: 01/2024"]');
+        if (tituloInput) {
+            if (mmEscolhido && aaEscolhido) tituloInput.value = `${String(mmEscolhido).padStart(2,'0')}/${String(aaEscolhido)}`;
+        }
+        // Reconstrói tabela e aplica feriados na página atual com mês/ano escolhidos
+        const paper = document.querySelector('.paper');
+        if (paper && mmEscolhido && aaEscolhido) {
+            montarTabelaDias(paper, mmEscolhido, aaEscolhido);
+            aplicarFeriadosAutomaticamente(paper, mmEscolhido, aaEscolhido);
+            if (mesFolhaInput) {
+                mesFolhaInput.value = `${String(aaEscolhido)}-${String(mmEscolhido).padStart(2,'0')}`;
+                renderCalendario(Number(mmEscolhido), Number(aaEscolhido));
+            }
+        }
+    }
+
+    carregarBtn.addEventListener('click', () => {
+        if (!servidorInput.value) return;
+        preencherPorNome(servidorInput.value);
+    });
+
+    // Permite gerar a folha com Enter no campo de servidor
+    servidorInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (!servidorInput.value) return;
+            preencherPorNome(servidorInput.value);
+        }
+    });
+
+    // Impressão em lote
+    function gerarPaginaParaRegistro(row) {
+        const original = document.querySelector('.paper');
+        const clone = original.cloneNode(true);
+        // Preencher dados no clone
+        const nomeCompleto = row['Funcionário'] || row['Funcionario'] || '';
+        const nomeParaCampo = nomeCompleto.length > 60 ? abreviarNomeSeNecessario(nomeCompleto, 55) : nomeCompleto;
+        setValueScoped(clone, 'funcionario', nomeParaCampo);
+        setValueScoped(clone, 'matricula', row['Matricula'] || row['Matrícula']);
+        setValueScoped(clone, 'lotacao', row['Lotação'] || row['Lotacao']);
+        // Usa mês/ano do seletor se disponível
+        let aaEscolhido = row['Ano'] || '';
+        let mmEscolhido = row['Mês'] || row['Mes'] || '';
+        if (mesFolhaInput && mesFolhaInput.value) {
+            const [yy, mm] = mesFolhaInput.value.split('-');
+            aaEscolhido = yy;
+            mmEscolhido = mm;
+        }
+        setValueScoped(clone, 'ano', aaEscolhido);
+        setValueScoped(clone, 'mes', mmEscolhido);
+        setValueScoped(clone, 'cargo_origem', row['Cargo Origem']);
+        setValueScoped(clone, 'horas_semanais', row['Horas Semanais']);
+        setValueScoped(clone, 'cpf', row['Cpf'] || row['CPF']);
+        const adm = row['Admissão'] || row['Admissao'];
+        setValueScoped(clone, 'admissao', formatDateToBR(adm));
+        montarTabelaDias(clone, mmEscolhido, aaEscolhido);
+        aplicarFeriadosAutomaticamente(clone, mmEscolhido, aaEscolhido);
+        return clone;
+    }
+
+    // ===== Automação de feriados =====
+    function buildAutoFeriadosMap(mm, aa) {
+        const y = Number(aa), m = Number(mm);
+        const map = {};
+        const addIfMonth = (iso, name) => {
+            if (!iso) return;
+            const d = new Date(`${iso}T00:00:00`);
+            if (d.getFullYear() === y && (d.getMonth() + 1) === m) {
+                map[iso] = name || 'FERIADO';
+            }
+        };
+        const natOn = document.getElementById('toggleNat')?.checked ?? true;
+        const estOn = document.getElementById('toggleEstMa')?.checked ?? true;
+        const munOn = document.getElementById('toggleMunSlz')?.checked ?? true;
+        const norm = (dt) => {
+            if (!dt) return '';
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dt)) {
+                const [dd, mm2, yyyy] = dt.split('/');
+                return `${yyyy}-${mm2}-${dd}`;
+            }
+            return dt;
+        };
+        const toList = (items) => {
+            if (!items) return [];
+            if (!Array.isArray(items)) {
+                return Object.entries(items).map(([date, name]) => ({ date, name }));
+            }
+            // Normaliza estrutura: aceita {key,nome} | {date,name} | {data,nome}
+            return items.map((it) => {
+                const date = it.key || it.date || it.data;
+                const name = it.nome || it.name;
+                return { date, name };
+            });
+        };
+        const addList = (list, enabled) => {
+            if (!enabled) return;
+            list.forEach(({ date, name }) => {
+                const iso = norm(date);
+                addIfMonth(iso, name || 'FERIADO');
+            });
+        };
+        let nacionais = [];
+        if (typeof gerarFeriadosNacionaisLocal === 'function') nacionais = toList(gerarFeriadosNacionaisLocal(y));
+        let estaduais = [];
+        if (typeof getEstaduaisMA === 'function') estaduais = toList(getEstaduaisMA(y));
+        let municipais = [];
+        if (typeof getMunicipaisSaoLuis === 'function') municipais = toList(getMunicipaisSaoLuis(y));
+        addList(nacionais, natOn);
+        addList(estaduais, estOn);
+        addList(municipais, munOn);
+        return map;
+    }
+
+    function collectFeriadosFromUIList() {
+        const container = document.getElementById('listaFeriados');
+        const items = [];
+        if (!container) return items;
+        container.querySelectorAll('[data-date]').forEach(el => {
+            const iso = el.getAttribute('data-date');
+            const nm = el.getAttribute('data-name') || el.textContent.trim();
+            if (iso) items.push({ date: iso, name: nm });
+        });
+        return items;
+    }
+
+    function parseTextareaFeriadosToMap() {
+        const ta = document.getElementById('feriadosInput');
+        const text = ta ? ta.value.trim() : '';
+        if (!text) return {};
+        if (typeof parseFeriados === 'function') return parseFeriados(text);
+        const map = {};
+        text.split(/\r?\n/).forEach(line => {
+            const m = line.match(/(\d{2}\/\d{2}\/\d{4})(?:\s*[-–]\s*)?(.*)/);
+            if (m) {
+                const [dd, mm, yyyy] = m[1].split('/');
+                const iso = `${yyyy}-${mm}-${dd}`;
+                const nm = (m[2] || '').trim() || 'FERIADO';
+                map[iso] = nm;
+            }
+        });
+        return map;
+    }
+
+    function combineFeriadosMap(mm, aa) {
+        const auto = buildAutoFeriadosMap(mm, aa);
+        const uiList = collectFeriadosFromUIList();
+        const parsed = parseTextareaFeriadosToMap();
+        const combined = { ...auto, ...parsed };
+        uiList.forEach(({ date, name }) => {
+            let iso = date;
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
+                const [dd, mm2, yyyy] = date.split('/');
+                iso = `${yyyy}-${mm2}-${dd}`;
+            }
+            combined[iso] = name || 'FERIADO';
+        });
+        return combined;
+    }
+
+    function aplicarFeriadosAutomaticamente(paper, mm, aa) {
+        const map = combineFeriadosMap(mm, aa);
+        window.feriadosMap = map;
+        aplicarFeriadosNaPagina(paper, mm, aa);
+    }
+
+    // Vincula alteração do seletor de mês para reaplicar feriados automaticamente
+    if (mesFolhaInput && !mesFolhaInput.dataset.autoBound) {
+        mesFolhaInput.dataset.autoBound = '1';
+        mesFolhaInput.addEventListener('change', () => {
+            const paper = document.querySelector('.paper');
+            const val = mesFolhaInput.value;
+            const [yy, mm] = (val || '').split('-');
+            if (paper && yy && mm) {
+                montarTabelaDias(paper, mm, yy);
+                aplicarFeriadosAutomaticamente(paper, mm, yy);
+                // Sincroniza período dos feriados com o mês da folha
+                if (feriadosMesSelect && feriadosAnoSelect) {
+                    feriadosMesSelect.value = String(mm).padStart(2,'0');
+                    feriadosAnoSelect.value = String(yy);
+                }
+                renderCalendario(Number(mm), Number(yy));
+                renderCatalogoFeriadosMes(mm, yy);
+                populatePFDiaSelect(mm, yy);
+            }
+        });
+    }
+
+    // Atualiza catálogo ao alterar filtros
+    ['toggleNat','toggleEstMa','toggleMunSlz'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.dataset.bound) {
+            el.dataset.bound = '1';
+            el.addEventListener('change', () => {
+                const val = mesFolhaInput?.value || '';
+                const [yy, mm] = (val || '').split('-');
+                if (yy && mm) renderCatalogoFeriadosMes(mm, yy);
+            });
+        }
+    });
+
+    function daysInMonth(mm, aa) {
+        const m = Number(mm), y = Number(aa);
+        return new Date(y, m, 0).getDate();
+    }
+
+    function populatePFDiaSelect(mm, aa) {
+        const sel = document.getElementById('pfDiaSelect');
+        if (!sel) return;
+        sel.innerHTML = '';
+        const total = daysInMonth(mm, aa);
+        for (let d = 1; d <= total; d++) {
+            const opt = document.createElement('option');
+            opt.value = String(d).padStart(2,'0');
+            opt.textContent = String(d).padStart(2,'0');
+            sel.appendChild(opt);
+        }
+    }
+
+    function renderCatalogoFeriadosMes(mm, aa) {
+        const cont = document.getElementById('catalogoFeriadosMes');
+        if (!cont) return;
+        const map = buildAutoFeriadosMap(mm, aa);
+        const entries = Object.entries(map).sort((a,b) => a[0].localeCompare(b[0]));
+        cont.innerHTML = '';
+        if (!entries.length) {
+            const p = document.createElement('div');
+            p.className = 'text-xs opacity-70';
+            p.textContent = 'Nenhum feriado encontrado para este mês com os filtros atuais.';
+            cont.appendChild(p);
+            return;
+        }
+        entries.forEach(([iso, nome]) => {
+            const d = new Date(`${iso}T00:00:00`);
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm2 = String(d.getMonth()+1).padStart(2,'0');
+            const yyyy = d.getFullYear();
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between gap-2 border rounded px-2 py-1 text-sm';
+            const left = document.createElement('div');
+            left.textContent = `${dd}/${mm2}/${yyyy} — ${nome}`;
+            item.appendChild(left);
+            cont.appendChild(item);
+        });
+    }
+
+    // Adicionar Ponto Facultativo ao mês atual
+    (function bindPF() {
+        const btn = document.getElementById('adicionarPFBtn');
+        if (!btn || btn.dataset.bound) return;
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+            const val = mesFolhaInput?.value || '';
+            const [yy, mm] = (val || '').split('-');
+            if (!yy || !mm) { alert('Selecione o "Mês da folha".'); return; }
+            const dia = document.getElementById('pfDiaSelect')?.value || '01';
+            const nome = document.getElementById('pfNomeInput')?.value?.trim() || 'Ponto Facultativo';
+            const iso = `${yy}-${mm}-${dia}`;
+            // Adiciona na lista manual (que sempre sobrepõe)
+            const lista = document.getElementById('listaFeriados');
+            if (lista) {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 border rounded px-2 py-1 text-sm';
+                row.setAttribute('data-date', iso);
+                row.setAttribute('data-name', nome);
+                const txt = document.createElement('div');
+                txt.textContent = `${dia}/${mm}/${yy} — ${nome}`;
+                const rm = document.createElement('button');
+                rm.className = 'text-red-600 hover:underline';
+                rm.textContent = 'Remover';
+                rm.addEventListener('click', () => { row.remove(); });
+                row.appendChild(txt);
+                row.appendChild(rm);
+                lista.appendChild(row);
+            }
+            // Reaplica imediatamente
+            const paper = document.querySelector('.paper');
+            if (paper) aplicarFeriadosAutomaticamente(paper, mm, yy);
+        });
+    })();
+
+    // Inicializa catálogo e PF select ao carregar mês atual
+    (function initCatalogAndPF(){
+        const now = new Date();
+        // Popula anos do período dos feriados
+        if (feriadosAnoSelect && !feriadosAnoSelect.dataset.bound) {
+            feriadosAnoSelect.dataset.bound = '1';
+            const yStart = now.getFullYear() - 3;
+            const yEnd = now.getFullYear() + 3;
+            for (let y = yStart; y <= yEnd; y++) {
+                const opt = document.createElement('option');
+                opt.value = String(y);
+                opt.textContent = String(y);
+                feriadosAnoSelect.appendChild(opt);
+            }
+        }
+        if (feriadosMesSelect && feriadosAnoSelect) {
+            // Inicial com mês da folha
+            const val = mesFolhaInput?.value || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            const [yy, mm] = (val || '').split('-');
+            feriadosMesSelect.value = String(mm).padStart(2,'0');
+            feriadosAnoSelect.value = String(yy);
+            renderCatalogoFeriadosMes(mm, yy);
+            populatePFDiaSelect(mm, yy);
+            const updateByPeriodo = () => {
+                const mSel = feriadosMesSelect.value;
+                const aSel = feriadosAnoSelect.value;
+                renderCalendario(Number(mSel), Number(aSel));
+                renderCatalogoFeriadosMes(mSel, aSel);
+                populatePFDiaSelect(mSel, aSel);
+            };
+            feriadosMesSelect.addEventListener('change', updateByPeriodo);
+            feriadosAnoSelect.addEventListener('change', updateByPeriodo);
+        }
+    })();
+    imprimirLoteBtn.addEventListener('click', () => {
+        // Combina feriados do texto e da UI para uso no lote
+        parseFeriados(feriadosInput.value);
+        const combined = new Map(feriadosMapUI);
+        feriadosMap.forEach((v,k) => combined.set(k,v));
+        feriadosMap = combined;
+        // Coleta selecionados do Set e ordena
+        const selecionados = Array.from(selectedNames).map(k => {
+            // recuperar nome com capitalização original, se disponível
+            const reg = registroPorNome.get(k);
+            return reg ? (reg['Funcionário'] || reg['Funcionario'] || k) : k;
+        }).sort((a,b) => a.localeCompare(b, 'pt', { sensitivity: 'base' }));
+        if (!selecionados.length) { alert('Selecione ao menos um servidor.'); return; }
+        // Monta páginas
+        printContainer.innerHTML = '';
+        selecionados.forEach(nome => {
+            const alvo = normaliza(nome);
+            let row = registros.find(r => normaliza(r['Funcionário'] || r['Funcionario']) === alvo);
+            if (!row) row = registros.find(r => normaliza(r['Funcionário'] || r['Funcionario']).includes(alvo));
+            if (row) {
+                const page = gerarPaginaParaRegistro(row);
+                printContainer.appendChild(page);
+            }
+        });
+        if (!printContainer.children.length) { alert('Não foi possível preparar páginas.'); return; }
+        // Oculta página original e mostra container
+        document.querySelector('.paper').classList.add('hidden');
+        printContainer.classList.remove('hidden');
+        // Imprime e limpa
+        window.print();
+        window.addEventListener('afterprint', () => {
+            printContainer.classList.add('hidden');
+            printContainer.innerHTML = '';
+            document.querySelector('.paper').classList.remove('hidden');
+        }, { once: true });
+    });
+    // Carrega a planilha ao abrir
+    carregarPlanilha();
 });
 </script>
 
