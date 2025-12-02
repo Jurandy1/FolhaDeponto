@@ -40,22 +40,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
-        /* --- ESTILOS GERAIS E ANIMAÇÕES --- */
+        /* --- ESTILOS GERAIS --- */
         body { font-family: 'Inter', sans-serif; }
-        
-        /* Transições suaves para dark mode */
         body, .bg-white, .bg-gray-50, .text-gray-800 {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        /* --- FOLHA DE PONTO (A4 - FÍSICO) --- */
-        /* Estas variáveis definem o papel. No Dark Mode, o papel CONTINUA branco para simular impressão real */
+        /* --- PAPEL A4 (FOLHA DE PONTO E AVISO DE FÉRIAS) --- */
         :root {
             --bg-paper: #fff;
             --color-text-paper: #000;
             --border-paper: #000;
-            --input-focus-paper: #e8f0fe;
-            --gray-header-paper: #e5e7eb;
         }
 
         .page-wrapper {
@@ -73,24 +68,22 @@
             height: 297mm;
             background: var(--bg-paper);
             color: var(--color-text-paper);
-            padding: 10mm;
+            padding: 15mm 20mm; /* Margens padrão ABNT/Oficial */
             box-sizing: border-box;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             margin: 0 auto;
-            font-family: Arial, Helvetica, sans-serif; /* Fonte padrão para documentos oficiais */
+            font-family: 'Times New Roman', Times, serif; /* Fonte Oficial para Documentos */
             position: relative;
-            transform-style: preserve-3d;
         }
 
-        /* Tabelas da Folha */
+        /* Tabela Folha de Ponto */
         .folha-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
             border: 2px solid var(--border-paper);
-            margin-bottom: 0;
+            font-family: Arial, Helvetica, sans-serif; /* Ponto usa Arial */
         }
-
         .folha-table td, .folha-table th {
             border: 1px solid var(--border-paper);
             padding: 2px 4px;
@@ -100,42 +93,30 @@
             overflow: hidden;
             white-space: nowrap;
         }
+        
+        /* Documento de Férias */
+        .doc-header { text-align: center; margin-bottom: 40px; }
+        .doc-brasao { width: 80px; height: auto; margin-bottom: 10px; }
+        .doc-title { font-size: 18px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .doc-subtitle { font-size: 14px; font-weight: bold; }
+        .doc-body { font-size: 14px; line-height: 1.6; text-align: justify; margin-bottom: 40px; }
+        .doc-signature { margin-top: 80px; text-align: center; }
+        .doc-line { border-top: 1px solid #000; width: 60%; margin: 0 auto 5px auto; }
 
-        /* Inputs Editáveis na Folha */
+        /* Inputs Editáveis */
         .input-linha {
-            border: none;
-            border-bottom: 1px solid #ccc;
-            background: transparent;
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: bold;
-            width: 100%;
-            outline: none;
-            color: var(--color-text-paper);
-            transition: border-bottom-color 0.2s;
+            border: none; border-bottom: 1px solid #ccc; background: transparent;
+            font-family: inherit; font-size: 11px; font-weight: bold; width: 100%; outline: none;
         }
         .input-linha:focus { border-bottom-color: #000; background-color: rgba(59, 130, 246, 0.1); }
+        td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #3b82f6; }
 
-        td[contenteditable="true"] { cursor: text; transition: background-color 0.2s; }
-        td[contenteditable="true"]:focus { background-color: var(--input-focus-paper); outline: 2px solid #3b82f6; outline-offset: -2px; z-index: 10; position: relative;}
-        td[contenteditable="true"]:hover { background-color: #f9fafb; }
-
-        /* Estilos Visuais Internos da Folha */
-        .bg-gray-folha { background-color: var(--gray-header-paper) !important; font-weight: bold; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* Estilos Visuais Folha Ponto */
+        .bg-gray-folha { background-color: #e5e7eb !important; font-weight: bold; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .bg-white-header { background-color: #fff !important; font-weight: bold; text-align: center; }
         .bg-white-cell { background-color: #fff !important; }
-        .titulo-folha { font-size: 14px; font-weight: bold; text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
-        .label-folha { font-size: 10px; color: #333; text-transform: uppercase; }
-        .valor-folha { font-weight: bold; font-size: 11px; padding-left: 5px; }
 
-        /* Assinaturas */
-        .footer-table { margin-top: -1px; border-top: none; width: 100%; border-collapse: collapse; }
-        .box-assinatura { height: 90px; vertical-align: top; padding: 5px; position: relative; width: 50%; border: 1px solid black; }
-        .linha-assinatura { border-bottom: 1px solid black; width: 80%; position: absolute; bottom: 35px; left: 10%; }
-        .data-assinatura { position: absolute; bottom: 5px; left: 10px; font-size: 11px; width: 90%; display: flex; align-items: center; gap: 2px; }
-        .input-data-short { width: 25px; border: none; border-bottom: 1px solid #000; text-align: center; font-family: inherit; font-size: inherit; background: transparent; }
-
-        /* --- TOAST NOTIFICATIONS --- */
+        /* --- TOAST --- */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { 
             padding: 12px 20px; border-radius: 8px; color: white; font-size: 14px; font-weight: 500; 
@@ -147,47 +128,44 @@
         .toast-error { background-color: #ef4444; }
         .toast-info { background-color: #3b82f6; }
 
-        /* --- PRINT STYLES (CRUCIAL) --- */
+        /* --- PRINT STYLES --- */
         @media print {
-            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle { display: none !important; }
+            header, .no-print, #ponto-controls, #content, #toast-container, .theme-toggle, .view-section:not(#print-context) { display: none !important; }
             body, html { margin: 0; padding: 0; background: #fff !important; color: #000 !important; }
-            #ponto-container { display: block !important; }
-            .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; overflow: visible; perspective: none; }
+            
+            /* Força visibilidade apenas do contexto de impressão atual */
+            #ponto-container, #ferias-print-container { display: block !important; }
+            
+            .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; }
             .page { 
-                margin: 0; border: none; box-shadow: none; width: 100%; height: 297mm; padding: 10mm; 
-                page-break-after: always; transform: none;
+                margin: 0; border: none; box-shadow: none; width: 100%; height: 297mm; padding: 15mm 20mm; 
+                page-break-after: always;
             }
             .input-linha { border-bottom: none; }
-            td[contenteditable="true"] { outline: none; background-color: transparent !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            
-            /* Reset Dark Mode for Print */
             .dark body { background-color: #fff !important; color: #000 !important; }
         }
 
-        /* Custom Scrollbar */
+        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .dark ::-webkit-scrollbar-track { background: #1f2937; }
         .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
 
-        /* Hero Image Aspect Ratio Fixes */
         .hero-banner { width: 100%; object-fit: cover; aspect-ratio: 3 / 1; }
         @media (max-width: 640px) { .hero-banner { aspect-ratio: 2 / 1; } }
     </style>
 </head>
 <body class="flex flex-col min-h-screen bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-    <!-- TOAST CONTAINER -->
+    <!-- TOAST -->
     <div id="toast-container"></div>
 
-    <!-- CABEÇALHO -->
-    <header class="sticky top-0 z-50 bg-semcas-600 dark:bg-gray-800 text-white shadow-lg transition-colors duration-300 no-print">
+    <!-- HEADER -->
+    <header class="sticky top-0 z-50 bg-semcas-600 dark:bg-gray-800 text-white shadow-lg no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center py-3">
-                <!-- Logo -->
                 <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
                     <div class="flex items-center gap-3">
                         <div class="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
@@ -198,177 +176,154 @@
                             <p class="text-xs text-blue-100 opacity-90">SEMCAS - São Luís</p>
                         </div>
                     </div>
-                    <!-- Theme Toggle (Mobile) -->
-                    <button onclick="toggleTheme()" class="md:hidden p-2 rounded-lg hover:bg-white/10 transition">
-                        <i class="fas fa-moon dark:hidden"></i>
-                        <i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
-                    </button>
+                    <div class="flex gap-2 md:hidden">
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition">
+                            <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
+                        </button>
+                        <button onclick="abrirConfiguracoes()" class="p-2 rounded-lg hover:bg-white/10 transition">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Menu e Ações -->
                 <div class="flex items-center gap-4 mt-3 md:mt-0 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                    <nav class="flex-grow" aria-label="Navegação principal">
+                    <nav class="flex-grow">
                         <ul class="flex space-x-1 sm:space-x-2 text-sm whitespace-nowrap">
                             <li><button onclick="router('home')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2" data-target="home"><i class="fas fa-home"></i> Início</button></li>
                             <li><button onclick="router('ferias')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2" data-target="ferias"><i class="fas fa-umbrella-beach"></i> Férias</button></li>
                             <li><button onclick="router('ponto')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2 font-semibold" data-target="ponto"><i class="fas fa-clock"></i> Folha</button></li>
                             <li><button onclick="router('processos')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2" data-target="processos"><i class="fas fa-folder-open"></i> Processos</button></li>
                             <li><button onclick="router('noticias')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2" data-target="noticias"><i class="fas fa-newspaper"></i> Notícias</button></li>
-                            <li><button onclick="router('sugestoes')" class="nav-btn px-3 py-2 rounded-lg hover:bg-white/10 transition flex items-center gap-2" data-target="sugestoes"><i class="fas fa-lightbulb"></i> Ideias</button></li>
                         </ul>
                     </nav>
-                    
-                    <!-- Theme Toggle (Desktop) -->
-                    <button onclick="toggleTheme()" class="hidden md:block p-2 rounded-lg hover:bg-white/10 transition ml-2" title="Alternar tema">
-                        <i class="fas fa-moon dark:hidden"></i>
-                        <i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
-                    </button>
+                    <div class="hidden md:flex gap-2 ml-2">
+                        <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition" title="Tema">
+                            <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
+                        </button>
+                        <button onclick="abrirConfiguracoes()" class="p-2 rounded-lg hover:bg-white/10 transition" title="Configurar Fonte de Dados">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEÚDO -->
     <main class="flex-grow w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         
-        <!-- View: HOME -->
+        <!-- HOME -->
         <div id="home-view" class="view-section hidden animate-fade-in">
-            <!-- Banner -->
             <div class="rounded-2xl overflow-hidden shadow-lg mb-6 ring-1 ring-black/5 relative group">
-                <img
-                  id="bannerPrincipal"
-                  src="Gemini_Generated_Image_ufn1hnufn1hnufn1.png"
-                  alt="Recursos Humanos - SEMCAS"
-                  class="hero-banner transition transform group-hover:scale-[1.01] duration-700"
-                />
+                <img id="bannerPrincipal" src="Gemini_Generated_Image_ufn1hnufn1hnufn1.png" alt="Recursos Humanos - SEMCAS" class="hero-banner transition transform group-hover:scale-[1.01] duration-700"/>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 md:p-10">
                     <div class="text-white">
                         <h2 class="text-3xl font-bold mb-2">Bem-vindo ao Portal do Servidor</h2>
-                        <p class="opacity-90 max-w-2xl text-sm md:text-base">Centralize suas demandas de RH, emita folhas de ponto e acompanhe seus processos administrativos com agilidade.</p>
+                        <p class="opacity-90 max-w-2xl text-sm md:text-base">Centralize suas demandas de RH, emita folhas de ponto e acompanhe seus processos administrativos.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Card 1 -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-3 rounded-lg">
-                            <i class="fas fa-bullhorn text-xl"></i>
-                        </div>
-                        <span class="text-xs font-bold bg-blue-50 dark:bg-gray-700 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">Avisos</span>
+                        <div class="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 p-3 rounded-lg"><i class="fas fa-database text-xl"></i></div>
+                        <span class="text-xs font-bold bg-blue-50 dark:bg-gray-700 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full">Sistema</span>
                     </div>
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Últimos Comunicados</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" id="home-aviso-texto">Carregando avisos...</p>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Status da Conexão</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" id="status-conexao">Verificando dados...</p>
+                    <button onclick="abrirConfiguracoes()" class="text-xs text-blue-600 underline mt-2">Configurar Planilha</button>
                 </div>
-
-                <!-- Card 2 -->
+                <!-- Card Folha -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 p-3 rounded-lg">
-                            <i class="fas fa-calendar-check text-xl"></i>
-                        </div>
-                        <span class="text-xs font-bold bg-green-50 dark:bg-gray-700 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">Agenda</span>
-                    </div>
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Próximo Feriado</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400" id="home-feriado-texto">Consultando calendário...</p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-3 rounded-lg">
-                            <i class="fas fa-clock text-xl"></i>
-                        </div>
+                        <div class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 p-3 rounded-lg"><i class="fas fa-clock text-xl"></i></div>
                         <button onclick="router('ponto')" class="text-xs font-bold text-purple-600 hover:underline">Acessar</button>
                     </div>
-                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Acesso Rápido</h3>
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="router('ponto')" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 rounded-lg transition">Gerar Folha</button>
-                        <button onclick="router('ferias')" class="flex-1 border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 text-xs font-bold py-2 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 transition">Férias</button>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Folha de Ponto</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Gere sua folha individual ou em lote.</p>
+                </div>
+                <!-- Card Férias -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 p-3 rounded-lg"><i class="fas fa-umbrella-beach text-xl"></i></div>
+                        <button onclick="router('ferias')" class="text-xs font-bold text-orange-600 hover:underline">Gerenciar</button>
                     </div>
+                    <h3 class="font-bold text-gray-800 dark:text-white mb-1">Gestão de Férias</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Controle períodos aquisitivos e emita avisos.</p>
                 </div>
             </div>
         </div>
 
-        <!-- View: FÉRIAS ROBUSTAS -->
+        <!-- FÉRIAS ROBUSTAS -->
         <div id="ferias-view" class="view-section hidden">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <!-- Header e Ações -->
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Controle de Férias</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Monitoramento de períodos aquisitivos e prazos legais.</p>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <i class="fas fa-umbrella-beach text-blue-600"></i> Gestão de Férias
+                    </h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Sistema de Controle de Períodos Aquisitivos - Lei Mun. São Luís</p>
                 </div>
-                <button onclick="carregarFerias()" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition flex items-center gap-2 shadow-sm">
-                    <i class="fas fa-sync-alt" id="icon-refresh-ferias"></i> Atualizar Dados
+                <div class="flex gap-2">
+                    <button onclick="abrirModalRegistroFerias()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition shadow flex items-center gap-2">
+                        <i class="fas fa-plus-circle"></i> Registrar Férias
+                    </button>
+                    <button onclick="carregarFerias()" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition">
+                        <i class="fas fa-sync-alt" id="icon-refresh-ferias"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Interativo -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <button onclick="filterFerias('vencida')" class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800/50 hover:bg-red-100 dark:hover:bg-red-900/40 transition text-left group">
+                    <span class="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider group-hover:underline">Vencidas</span>
+                    <div class="text-3xl font-bold text-red-700 dark:text-red-400 mt-1" id="count-vencida">0</div>
+                    <div class="text-[10px] text-red-500 mt-1">Clique para filtrar</div>
+                </button>
+                <button onclick="filterFerias('critico')" class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/50 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition text-left group">
+                    <span class="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider group-hover:underline">Crítico (< 60d)</span>
+                    <div class="text-3xl font-bold text-orange-700 dark:text-orange-400 mt-1" id="count-critico">0</div>
+                    <div class="text-[10px] text-orange-500 mt-1">Ação necessária</div>
+                </button>
+                <button onclick="filterFerias('atencao')" class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/50 hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition text-left group">
+                    <span class="text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider group-hover:underline">Atenção (< 90d)</span>
+                    <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-400 mt-1" id="count-atencao">0</div>
+                    <div class="text-[10px] text-yellow-500 mt-1">Planejamento</div>
+                </button>
+                <button onclick="filterFerias('emdia')" class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition text-left group">
+                    <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider group-hover:underline">Regular</span>
+                    <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mt-1" id="count-emdia">0</div>
+                    <div class="text-[10px] text-blue-500 mt-1">Sem pendências</div>
                 </button>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800/50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Vencidas</span>
-                            <div class="text-3xl font-bold text-red-700 dark:text-red-400 mt-1" id="count-vencida">0</div>
-                        </div>
-                        <i class="fas fa-exclamation-circle text-red-200 dark:text-red-800 text-2xl"></i>
-                    </div>
-                </div>
-                <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Crítico</span>
-                            <div class="text-3xl font-bold text-orange-700 dark:text-orange-400 mt-1" id="count-critico">0</div>
-                        </div>
-                        <i class="fas fa-stopwatch text-orange-200 dark:text-orange-800 text-2xl"></i>
-                    </div>
-                </div>
-                <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">Atenção</span>
-                            <div class="text-3xl font-bold text-yellow-700 dark:text-yellow-400 mt-1" id="count-atencao">0</div>
-                        </div>
-                        <i class="fas fa-calendar-day text-yellow-200 dark:text-yellow-800 text-2xl"></i>
-                    </div>
-                </div>
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800/50">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Regular</span>
-                            <div class="text-3xl font-bold text-blue-700 dark:text-blue-400 mt-1" id="count-emdia">0</div>
-                        </div>
-                        <i class="fas fa-check-circle text-blue-200 dark:text-blue-800 text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filtros e Tabela -->
+            <!-- Tabela -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div class="p-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 flex flex-col lg:flex-row gap-4 items-center justify-between">
-                    <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto flex-grow">
-                        <div class="relative flex-grow">
-                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input id="filtroFerias" oninput="renderTabelaFerias()" placeholder="Buscar servidor..." class="pl-9 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white">
-                        </div>
-                        <select id="filtroStatusFerias" onchange="renderTabelaFerias()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="todos">Todos os Status</option>
-                            <option value="vencida">Vencidas</option>
-                            <option value="critico">Críticas (< 60d)</option>
-                            <option value="atencao">Atenção (< 90d)</option>
-                        </select>
-                    </div>
                     
-                    <div class="flex items-center gap-2 w-full lg:w-auto">
-                         <div class="relative group">
-                            <i class="fas fa-cog text-gray-400 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300 transition p-2"></i>
-                            <div class="absolute right-0 top-8 bg-white dark:bg-gray-800 p-3 shadow-xl rounded-lg border dark:border-gray-700 w-72 hidden group-hover:block z-20">
-                                <label class="text-xs font-bold text-gray-500 mb-1 block">Fonte de Dados (CSV URL)</label>
-                                <input id="sheetUrlInput" class="w-full text-xs border rounded p-1 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <button class="w-full bg-blue-600 text-white text-xs py-1 rounded" onclick="salvarSheetUrl()">Salvar URL</button>
-                            </div>
+                    <div class="flex items-center gap-2 w-full lg:w-auto p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg" id="batch-actions" style="display:none;">
+                        <span class="text-xs font-bold text-blue-800 dark:text-blue-300 ml-2" id="batch-count">0 selecionados</span>
+                        <div class="h-4 w-px bg-blue-300 dark:bg-blue-700"></div>
+                        <button onclick="abrirModalRegistroFerias(true)" class="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 font-bold">
+                            Registrar em Lote
+                        </button>
+                        <button onclick="limparSelecaoFerias()" class="text-xs text-blue-600 dark:text-blue-300 hover:underline px-2">Cancelar</button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto flex-grow justify-end">
+                        <div class="relative flex-grow max-w-md">
+                            <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                            <input id="filtroFerias" oninput="renderTabelaFerias()" placeholder="Buscar servidor por nome..." class="pl-9 w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 dark:text-white">
                         </div>
+                        <select id="filtroStatusFerias" onchange="renderTabelaFerias()" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none w-40">
+                            <option value="todos">Todos Status</option>
+                            <option value="vencida">Vencidas</option>
+                            <option value="critico">Críticas</option>
+                            <option value="atencao">Atenção</option>
+                            <option value="emdia">Em Dia</option>
+                        </select>
                     </div>
                 </div>
 
@@ -376,12 +331,13 @@
                     <table class="w-full text-sm text-left">
                         <thead class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-bold uppercase text-xs">
                             <tr>
+                                <th class="px-4 py-3 w-10 text-center"><input type="checkbox" onclick="toggleAllFerias(this)" class="accent-blue-600"></th>
                                 <th class="px-4 py-3">Servidor</th>
                                 <th class="px-4 py-3 hidden md:table-cell">Lotação</th>
-                                <th class="px-4 py-3 hidden sm:table-cell">Admissão</th>
-                                <th class="px-4 py-3">Limite</th>
-                                <th class="px-4 py-3 text-center">Dias Rest.</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Limite Concessivo</th>
+                                <th class="px-4 py-3 text-center">Saldo (Dias)</th>
                                 <th class="px-4 py-3 text-center">Status</th>
+                                <th class="px-4 py-3 text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-ferias-body" class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-800">
@@ -389,262 +345,70 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Paginação -->
-                <div class="p-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+                
+                <div class="p-3 bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
                     <div id="feriasPageInfo">Página 1</div>
                     <div class="flex gap-2">
-                        <button id="feriasPrevBtn" class="px-3 py-1 rounded border hover:bg-white dark:hover:bg-gray-700 disabled:opacity-50" onclick="feriasPrev()">Ant</button>
-                        <button id="feriasNextBtn" class="px-3 py-1 rounded border hover:bg-white dark:hover:bg-gray-700 disabled:opacity-50" onclick="feriasNext()">Próx</button>
+                        <button id="feriasPrevBtn" class="px-3 py-1 rounded border hover:bg-white dark:hover:bg-gray-700" onclick="feriasPrev()">Ant</button>
+                        <button id="feriasNextBtn" class="px-3 py-1 rounded border hover:bg-white dark:hover:bg-gray-700" onclick="feriasNext()">Próx</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- View: PROCESSOS (SEI) -->
+        <!-- OUTRAS VIEWS (Ponto, Processos...) MANTIDAS MAS OCULTAS INICIALMENTE -->
         <div id="processos-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 flex items-center gap-2">
-                <i class="fas fa-folder-open text-blue-500"></i> Acompanhamento SEI
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Formulário -->
-                <div class="md:col-span-1 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border dark:border-gray-700 h-fit">
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
-                        <i class="fas fa-plus-circle"></i> Novo Processo
-                    </h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Número SEI</label>
-                            <input id="procNumero" class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="00000.000000/0000-00">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Título/Assunto</label>
-                            <input id="procTitulo" class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ex: Progressão Funcional">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data de Abertura</label>
-                            <input id="procData" type="date" class="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <button id="btnSalvarProc" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition shadow-md mt-2">
-                            Cadastrar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Lista -->
-                <div class="md:col-span-2">
-                    <h3 class="font-bold text-gray-700 dark:text-gray-300 mb-4">Meus Processos</h3>
-                    <div id="listaProcessos" class="space-y-3">
-                        <!-- JS Populate -->
-                    </div>
-                </div>
-            </div>
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Processos SEI</h2>
+            <div id="listaProcessos"></div>
+            <button onclick="cadastrarProcessoDemo()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">Adicionar Processo Demo</button>
         </div>
-
-        <!-- View: NOTÍCIAS -->
         <div id="noticias-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">Mural de Notícias</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="md:col-span-1 space-y-4">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border dark:border-blue-800/30">
-                        <h3 class="font-bold text-blue-800 dark:text-blue-300 mb-3 text-sm">Publicar Aviso</h3>
-                        <input id="newsTitulo" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm mb-2 dark:bg-gray-700 dark:text-white" placeholder="Título">
-                        <input id="newsResumo" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm mb-2 dark:bg-gray-700 dark:text-white" placeholder="Resumo curto">
-                        <textarea id="newsConteudo" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm mb-2 h-24 dark:bg-gray-700 dark:text-white" placeholder="Conteúdo completo..."></textarea>
-                        <div class="flex items-center gap-2 mb-3">
-                            <input id="newsPublicado" type="checkbox" class="accent-blue-600 rounded">
-                            <label for="newsPublicado" class="text-sm text-gray-700 dark:text-gray-300 select-none">Exibir na Home</label>
-                        </div>
-                        <button id="btnSalvarNews" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">Salvar Notícia</button>
-                    </div>
-                </div>
-                <div class="md:col-span-2 space-y-4" id="listaNoticias">
-                    <!-- JS populate -->
-                </div>
-            </div>
+             <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Notícias</h2>
+             <div id="listaNoticias"></div>
         </div>
 
-        <!-- View: SUGESTÕES -->
-        <div id="sugestoes-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-             <div class="max-w-2xl mx-auto text-center py-10">
-                <div class="bg-yellow-100 dark:bg-yellow-900/30 inline-flex p-4 rounded-full mb-4 text-yellow-600 dark:text-yellow-400">
-                    <i class="fas fa-lightbulb text-4xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Banco de Ideias</h2>
-                <p class="text-gray-600 dark:text-gray-400 mb-6">Ajude a modernizar o RH da SEMCAS. Estas são as melhorias já mapeadas para as próximas versões do sistema.</p>
-                
-                <ul class="text-left bg-gray-50 dark:bg-gray-900/50 p-6 rounded-xl space-y-3 border dark:border-gray-700">
-                    <li class="flex items-start gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span>SSO (Login único) para servidores.</span></li>
-                    <li class="flex items-start gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span>Dashboard de férias com envio automático de e-mail.</span></li>
-                    <li class="flex items-start gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span>Integração via API com o SEI.</span></li>
-                    <li class="flex items-start gap-3"><i class="fas fa-check text-green-500 mt-1"></i> <span>Exportação de relatórios em PDF/Excel nativo.</span></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- View: PONTO (Ferramenta Principal) -->
+        <!-- PONTO (Restaurado com lógica completa) -->
         <div id="ponto-container" class="view-section hidden pb-20">
-            
-            <!-- CONTROLES -->
-            <div id="ponto-controls" class="no-print bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6 sticky top-20 z-40 transition-colors">
+            <div id="ponto-controls" class="no-print bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6 sticky top-20 z-40">
                 <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4 mb-4">
                     <div>
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                            <i class="fas fa-print text-blue-600 dark:text-blue-400"></i> Gerador de Folha de Frequência
-                        </h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Configure, preencha e imprima. O layout A4 é mantido na impressão.</p>
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white"><i class="fas fa-print"></i> Gerador de Folha</h2>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Selecione o servidor e imprima (Papel A4).</p>
                     </div>
-                    <button onclick="window.print()" class="bg-gray-800 dark:bg-gray-700 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-gray-900 dark:hover:bg-gray-600 transition shadow flex items-center gap-2 border dark:border-gray-600">
-                        <i class="fas fa-print"></i> Imprimir Folha
-                    </button>
+                    <button onclick="window.print()" class="bg-gray-800 text-white px-5 py-2 rounded-lg font-bold"><i class="fas fa-print"></i> Imprimir</button>
                 </div>
-
-                <!-- Tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto">
-                    <button onclick="switchTab('folha')" id="tab-btn-folha" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600 dark:text-blue-400">Individual</button>
-                    <button onclick="switchTab('lote')" id="tab-btn-lote" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 border-b-2 border-transparent">Lote (Múltiplos)</button>
-                    <button onclick="switchTab('feriados')" id="tab-btn-feriados" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 border-b-2 border-transparent">Configurar Feriados</button>
+                <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                    <button onclick="switchTab('folha')" id="tab-btn-folha" class="tab-btn px-4 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600">Individual</button>
+                    <button onclick="switchTab('lote')" id="tab-btn-lote" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Lote</button>
                 </div>
-                
-                <!-- Tab: Individual -->
                 <div id="tab-folha" class="tab-content">
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border dark:border-gray-700">
-                        <div class="md:col-span-5 relative">
-                            <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Buscar Servidor</label>
-                            <i class="fas fa-search absolute left-3 top-8 text-gray-400"></i>
-                            <input id="servidorNome" list="servidoresList" class="w-full pl-9 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:text-white" placeholder="Digite o nome...">
-                            <datalist id="servidoresList"></datalist>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded">
+                        <div class="md:col-span-5"><label class="text-xs font-bold">Servidor</label><input id="servidorNome" list="servidoresList" class="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white">
+                        <datalist id="servidoresList"></datalist>
                         </div>
-                        <div class="md:col-span-2">
-                            <button id="carregarDadosBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition text-sm shadow-sm">
-                                <i class="fas fa-check"></i> Preencher
-                            </button>
-                        </div>
+                        <div class="md:col-span-2"><button id="carregarDadosBtn" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm">Preencher</button></div>
                         <div class="md:col-span-5 flex gap-2">
-                            <div class="w-1/2">
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Mês</label>
-                                <select id="mesSelect" class="w-full border dark:border-gray-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white"></select>
-                            </div>
-                            <div class="w-1/2">
-                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Ano</label>
-                                <select id="anoSelect" class="w-full border dark:border-gray-600 rounded-lg px-2 py-2 text-sm bg-white dark:bg-gray-700 dark:text-white"></select>
-                            </div>
+                             <div class="w-1/2"><label class="text-xs font-bold">Mês</label><select id="mesSelect" class="w-full border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white"></select></div>
+                             <div class="w-1/2"><label class="text-xs font-bold">Ano</label><select id="anoSelect" class="w-full border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white"></select></div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Tab: Lote -->
                 <div id="tab-lote" class="tab-content hidden">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/30">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="font-bold text-sm text-blue-800 dark:text-blue-300">Seleção Múltipla para Impressão</h3>
-                            <span id="contadorLote" class="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full font-bold">0 selecionados</span>
-                        </div>
-                        <input id="filtroLote" class="w-full border dark:border-gray-600 rounded px-3 py-2 text-sm mb-3 dark:bg-gray-700 dark:text-white" placeholder="Filtrar lista...">
-                        <div id="listaLote" class="h-40 overflow-y-auto bg-white dark:bg-gray-800 border dark:border-gray-600 rounded p-2 space-y-1 text-sm">
-                            <!-- JS Populates -->
-                        </div>
-                        <div class="flex gap-3 mt-3 border-t dark:border-gray-600 pt-3">
-                            <button onclick="selecionarTodosLote()" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">Selecionar Todos</button>
-                            <button onclick="limparLote()" class="text-xs font-bold text-red-600 dark:text-red-400 hover:underline">Limpar Seleção</button>
-                        </div>
-                    </div>
-                    <button onclick="imprimirLote()" class="w-full mt-3 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow flex justify-center items-center gap-2">
-                        <i class="fas fa-layer-group"></i> Gerar e Imprimir Lote
-                    </button>
+                    <input id="filtroLote" class="w-full border rounded px-3 py-2 text-sm mb-3 dark:bg-gray-700 dark:text-white" placeholder="Filtrar...">
+                    <div id="listaLote" class="h-40 overflow-y-auto bg-white dark:bg-gray-800 border rounded p-2 space-y-1 text-sm"></div>
+                    <button onclick="imprimirLote()" class="w-full mt-3 bg-green-600 text-white py-2 rounded font-bold">Gerar Lote</button>
                 </div>
-
-                <!-- Tab: Feriados -->
-                <div id="tab-feriados" class="tab-content hidden">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border dark:border-gray-700 shadow-sm">
-                            <div class="flex justify-between items-center mb-2 border-b dark:border-gray-700 pb-2">
-                                <h3 class="font-bold text-xs uppercase text-gray-500 dark:text-gray-400">Calendário Oficial</h3>
-                                <select id="feriadosAnoSelect" class="border dark:border-gray-600 rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white"></select>
-                            </div>
-                            <div id="listaFeriadosOficiais" class="h-40 overflow-y-auto space-y-1 text-xs text-gray-600 dark:text-gray-300 scrollbar-thin"></div>
-                        </div>
-                        
-                        <div class="bg-blue-50 dark:bg-gray-900 p-3 rounded-lg border dark:border-gray-700">
-                            <h3 class="font-bold text-xs uppercase text-blue-600 dark:text-blue-400 mb-2">Adicionar Manualmente</h3>
-                            <div class="space-y-2">
-                                <div class="flex gap-2">
-                                    <input id="dataExtra" type="text" placeholder="DD/MM/AAAA" class="border dark:border-gray-600 rounded px-2 py-1 text-sm w-1/3 dark:bg-gray-700 dark:text-white text-center">
-                                    <input id="nomeExtra" type="text" placeholder="Descrição do evento..." class="border dark:border-gray-600 rounded px-2 py-1 text-sm w-2/3 dark:bg-gray-700 dark:text-white">
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <select id="tipoExtra" class="border dark:border-gray-600 rounded px-2 py-1 text-sm w-full dark:bg-gray-700 dark:text-white">
-                                        <option value="feriado">Feriado (Vermelho)</option>
-                                        <option value="facultativo">Ponto Facultativo (Amarelo)</option>
-                                    </select>
-                                    <button onclick="addFeriadoManual()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-bold hover:bg-blue-700"><i class="fas fa-plus"></i></button>
-                                </div>
-                                <div id="listaExtras" class="mt-2 space-y-1 max-h-24 overflow-y-auto"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
-
-            <!-- PAPEL A4 (VISUALIZAÇÃO) -->
+            
+            <!-- Folha de Ponto Layout A4 -->
             <div class="page-wrapper no-print:mt-4">
                 <div class="page" id="mainPaper">
-                    
-                    <!-- 1. DADOS CADASTRAIS -->
                     <table class="folha-table">
-                        <tr>
-                            <td class="bg-gray-folha titulo-folha" style="width: 70%;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td>
-                            <td class="bg-white-cell" style="width: 30%;">
-                                <span class="label-folha">Mês / Ano:</span> 
-                                <span id="labelMesAno" class="valor-folha" style="font-size: 13px;">NOVEMBRO/2025</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" class="bg-white-cell text-center">
-                                <span class="label-folha">Órgão Municipal:</span> 
-                                <span style="font-weight: bold; font-size: 11px;">Secretaria Municipal da Criança e Assistência Social/ SEMCAS</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="bg-white-cell" style="border-right: none;">
-                                <div style="display: flex; align-items: center;">
-                                    <span class="label-folha" style="white-space: nowrap; margin-right: 5px;">Nome:</span> 
-                                    <input type="text" id="inpNome" class="input-linha" placeholder="...">
-                                </div>
-                            </td>
-                            <td class="bg-white-cell" style="width: 25%; border-left: 1px solid #000;">
-                                <div style="display: flex; align-items: center;">
-                                    <span class="label-folha" style="margin-right: 5px;">Matrícula:</span> 
-                                    <input type="text" id="inpMatricula" class="input-linha" style="width: 80px;">
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="bg-white-cell" style="border-right: none;">
-                                <div style="display: flex; align-items: center;">
-                                    <span class="label-folha" style="white-space: nowrap; margin-right: 5px;">Cargo/Função:</span> 
-                                    <input type="text" id="inpCargo" class="input-linha" placeholder="...">
-                                </div>
-                            </td>
-                            <td class="bg-white-cell" style="border-left: 1px solid #000;">
-                                <div style="display: flex; align-items: center;">
-                                    <span class="label-folha" style="margin-right: 5px;">Vínculo:</span> 
-                                    <input type="text" id="inpVinculo" class="input-linha" style="width: 90px;">
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="2" class="bg-white-cell">
-                                <div style="display: flex; align-items: center;">
-                                    <span class="label-folha" style="white-space: nowrap; margin-right: 5px;">Unidade Administrativa:</span> 
-                                    <input type="text" id="inpUnidade" class="input-linha" value="SEMCAS">
-                                </div>
-                            </td>
-                        </tr>
+                        <tr><td class="bg-gray-folha titulo-folha" style="width: 70%;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td><td class="bg-white-header"><span id="labelMesAno">NOV/2025</span></td></tr>
+                        <tr><td colspan="2" class="bg-white-header">Secretaria Municipal da Criança e Assistência Social/ SEMCAS</td></tr>
+                        <tr><td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha"></td><td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width:80px"></td></tr>
+                        <tr><td class="bg-white-cell">Cargo: <input id="inpCargo" class="input-linha"></td><td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha"></td></tr>
                     </table>
-        
-                    <!-- 2. TABELA DE PONTO -->
                     <table class="folha-table" style="margin-top: -1px;">
                         <colgroup>
                             <col class="col-dia">
@@ -678,398 +442,448 @@
                         </thead>
                         <tbody id="daysTableBody"></tbody>
                     </table>
-        
-                    <!-- 3. RODAPÉ ASSINATURAS -->
-                    <table class="footer-table">
-                        <tr>
-                            <td class="box-assinatura">
+                    <!-- Assinaturas -->
+                    <table class="footer-table" style="width:100%; border-collapse:collapse; margin-top:-1px;">
+                         <tr>
+                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
                                 <div style="font-weight: bold; font-size: 11px;">Chefia Imediata:</div>
-                                <div class="linha-assinatura"></div>
-                                <div class="data-assinatura">
-                                    São Luís, 
-                                    <input type="text" class="input-data-short"> / 
-                                    <input type="text" class="input-data-short"> / 
-                                    <input type="text" class="input-data-short">
-                                </div>
                             </td>
-                            <td class="box-assinatura">
-                                <div style="font-weight: bold; font-size: 11px;">Visto (Área de Recursos Humanos):</div>
-                                <div class="linha-assinatura"></div>
-                                <div class="data-assinatura">
-                                    São Luís, 
-                                    <input type="text" class="input-data-short"> / 
-                                    <input type="text" class="input-data-short"> / 
-                                    <input type="text" class="input-data-short">
-                                </div>
+                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
+                                <div style="font-weight: bold; font-size: 11px;">Visto RH:</div>
                             </td>
                         </tr>
                     </table>
                 </div>
             </div>
-            
-            <!-- Hidden Container for Batch Print -->
             <div id="printContainer" class="hidden"></div>
         </div>
 
-        <!-- MODAL DETALHE PROCESSO -->
-        <div id="procDetalheModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl p-6 shadow-2xl border dark:border-gray-700 animate-scale-in">
-                <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-3">
-                    <h3 class="font-bold text-lg text-gray-800 dark:text-white">Detalhes do Processo</h3>
-                    <button onclick="fecharProcDetalhe()" class="text-gray-400 hover:text-red-500 transition text-xl"><i class="fas fa-times"></i></button>
+        <!-- CONTEXTO DE IMPRESSÃO: DOCUMENTO DE FÉRIAS -->
+        <div id="ferias-print-container" class="hidden">
+            <div class="page" id="docFeriasPaper">
+                <div class="doc-header">
+                    <div style="width:80px; height:80px; background:#eee; margin:0 auto 10px auto; border-radius:50%; display:flex; align-items:center; justify-content:center; border:1px solid #ccc;">
+                        <i class="fas fa-landmark text-3xl text-gray-400"></i>
+                    </div>
+                    <div class="doc-title">PREFEITURA DE SÃO LUÍS</div>
+                    <div class="doc-subtitle">SECRETARIA MUNICIPAL DA CRIANÇA E ASSISTÊNCIA SOCIAL - SEMCAS</div>
+                    <div style="margin-top:10px; font-weight:bold;">AVISO DE FÉRIAS</div>
                 </div>
-                <div id="procDetalheConteudo" class="text-sm dark:text-gray-300"></div>
+
+                <div class="doc-body">
+                    <p style="margin-bottom: 20px;">
+                        A <strong>SECRETARIA MUNICIPAL DA CRIANÇA E ASSISTÊNCIA SOCIAL</strong>, no uso de suas atribuições legais e em conformidade com o Estatuto do Servidor Público Municipal de São Luís, comunica ao(à) servidor(a) abaixo identificado(a) a concessão de suas férias regulamentares.
+                    </p>
+
+                    <table style="width:100%; margin-bottom: 20px; border-collapse:collapse; border:1px solid #000;">
+                        <tr><td style="padding:5px; border:1px solid #000; font-weight:bold; width:30%;">NOME:</td><td style="padding:5px; border:1px solid #000;" id="docNome">Fulano de Tal</td></tr>
+                        <tr><td style="padding:5px; border:1px solid #000; font-weight:bold;">MATRÍCULA:</td><td style="padding:5px; border:1px solid #000;" id="docMatricula">00000</td></tr>
+                        <tr><td style="padding:5px; border:1px solid #000; font-weight:bold;">LOTAÇÃO:</td><td style="padding:5px; border:1px solid #000;" id="docLotacao">SEMCAS</td></tr>
+                        <tr><td style="padding:5px; border:1px solid #000; font-weight:bold;">PERÍODO AQUISITIVO:</td><td style="padding:5px; border:1px solid #000;" id="docPeriodoAquisitivo">2024/2025</td></tr>
+                    </table>
+
+                    <p style="margin-bottom: 10px;">O gozo das férias ocorrerá no seguinte período:</p>
+
+                    <table style="width:100%; margin-bottom: 30px; border-collapse:collapse; border:1px solid #000; text-align:center;">
+                        <tr style="background:#eee; font-weight:bold;">
+                            <td style="padding:5px; border:1px solid #000;">INÍCIO</td>
+                            <td style="padding:5px; border:1px solid #000;">FIM</td>
+                            <td style="padding:5px; border:1px solid #000;">DIAS</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; border:1px solid #000;" id="docDataInicio">01/11/2025</td>
+                            <td style="padding:10px; border:1px solid #000;" id="docDataFim">30/11/2025</td>
+                            <td style="padding:10px; border:1px solid #000;" id="docDias">30</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="doc-signature">
+                    <div style="margin-bottom: 10px;">São Luís - MA, <span id="docDataAtual">02 de Dezembro de 2025</span>.</div>
+                    <br><br><br>
+                    <div class="doc-line"></div>
+                    <div><strong>Gestão de Recursos Humanos</strong></div>
+                    <div style="font-size:12px;">SEMCAS</div>
+                    <br><br><br>
+                    <div class="doc-line" style="width:40%;"></div>
+                    <div style="font-size:12px;">Ciente do Servidor(a)</div>
+                </div>
             </div>
         </div>
+
     </main>
 
+    <!-- MODAL REGISTRO DE FÉRIAS -->
+    <div id="modalFerias" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 shadow-2xl border dark:border-gray-600">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Registrar Férias</h3>
+            <div id="feriasBatchInfo" class="hidden mb-4 bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-300">
+                <i class="fas fa-layer-group"></i> Registrando para <span id="feriasBatchCount" class="font-bold">0</span> servidores.
+            </div>
+            <div class="space-y-4">
+                <div id="divServidorSingle">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Servidor</label>
+                    <input id="feriasNomeInput" class="w-full border rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white" readonly>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Data Início</label>
+                        <input type="date" id="feriasInicio" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Duração</label>
+                        <select id="feriasDuracao" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white" onchange="calcularFimFerias()">
+                            <option value="30">30 dias</option><option value="20">20 dias</option><option value="15">15 dias</option><option value="10">10 dias</option><option value="5">05 dias</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded border dark:border-gray-700 flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Retorno:</span>
+                    <span id="feriasRetornoDisplay" class="font-bold text-gray-800 dark:text-white">--/--/----</span>
+                </div>
+                <div class="flex gap-2 justify-end mt-4">
+                    <button onclick="fecharModalFerias()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                    <button onclick="salvarFerias()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIG -->
+    <div id="modalConfig" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-lg p-6 shadow-2xl border dark:border-gray-600">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white"><i class="fas fa-cog"></i> Configuração de Dados</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Insira a URL pública (CSV) do Google Sheets para alimentar o sistema.</p>
+            <input id="configUrlInput" class="w-full border rounded px-3 py-2 mb-2 dark:bg-gray-700 dark:text-white font-mono text-xs" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv">
+            <div class="flex gap-2 justify-end mt-4">
+                <button onclick="resetarConfig()" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded text-sm mr-auto">Restaurar Padrão</button>
+                <button onclick="document.getElementById('modalConfig').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
+                <button onclick="salvarConfig()" class="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // ====================================================================
-        // UTILITÁRIOS E UI
-        // ====================================================================
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            
-            let icon = 'info-circle';
-            if (type === 'success') icon = 'check-circle';
-            if (type === 'error') icon = 'exclamation-circle';
-            
-            toast.innerHTML = `<i class="fas fa-${icon} text-lg"></i> <span>${message}</span>`;
-            container.appendChild(toast);
-            
-            // Trigger animation
-            requestAnimationFrame(() => toast.classList.add('show'));
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
+        // --- DADOS DE FALLBACK (PARA QUANDO A PLANILHA FALHAR) ---
+        const DUMMY_DATA = [
+            { "Nome": "ANA PAULA SILVA", "Matricula": "12345", "Lotacao": "RH", "Admissao": "01/02/2020", "Cargo": "Analista" },
+            { "Nome": "CARLOS EDUARDO SOUZA", "Matricula": "67890", "Lotacao": "FINANCEIRO", "Admissao": "15/05/2018", "Cargo": "Técnico" },
+            { "Nome": "MARIA FERNANDA LIMA", "Matricula": "54321", "Lotacao": "GABINETE", "Admissao": "10/01/2023", "Cargo": "Assessor" },
+            { "Nome": "JOAO PEDRO SANTOS", "Matricula": "98765", "Lotacao": "SEMCAS", "Admissao": "20/11/2019", "Cargo": "Motorista" },
+            { "Nome": "LUCIA HELENA COSTA", "Matricula": "11223", "Lotacao": "RH", "Admissao": "05/08/2021", "Cargo": "Assistente" }
+        ];
 
-        // Theme Manager
-        function toggleTheme() {
-            const html = document.documentElement;
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        }
+        // *** AQUI ESTÁ O AJUSTE AUTOMÁTICO DO LINK ***
+        // O usuário forneceu um link 'pubhtml', mas precisamos do 'pub?output=csv'
+        const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjyCxbgnAsHpVZsAzU_VzGi7D-TXnaPciKUWudnp5thY6N53R8laj-aWB8IF_pQPCTevKdOro8rGAM/pub?output=csv';
+        let API_URL = localStorage.getItem('sheetCsvUrl') || DEFAULT_URL;
 
-        // Initialize Theme
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        }
-
-        // ====================================================================
-        // DADOS E ESTADO
-        // ====================================================================
-        let SHEET_CSV_URL = localStorage.getItem('sheetCsvUrl') || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSETVY6MUfwwl_TWax9qyqLXYzY3yZSuhPIQj16hHu-EhhdVYpyYnp81NOcM3akDQ/pub?output=csv';
-
-        // ... (Logic for EasterDate/Holidays kept same, just organized) ...
-        function easterDate(year) {
-            const a = year % 19, b = Math.floor(year / 100), c = year % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
-            return new Date(year, month - 1, day);
-        }
-        function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
-        function keyISO(d) { return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-        function pad2(n) { return String(n).padStart(2, '0'); }
-
-        function getHolidayMap(year) {
-            const map = new Map();
-            const push = (y,m,d,nome,tipo='feriado') => map.set(`${y}-${pad2(m)}-${pad2(d)}`, { nome, tipo });
-            push(year,1,1,'Confraternização Universal');
-            push(year,4,21,'Tiradentes');
-            push(year,5,1,'Dia do Trabalho');
-            push(year,9,7,'Independência do Brasil');
-            push(year,10,12,'N. Sra. Aparecida');
-            push(year,11,2,'Finados');
-            push(year,11,15,'Proclamação da República');
-            push(year,12,25,'Natal');
-            push(year,11,20,'Consciência Negra');
-            
-            const easter = easterDate(year);
-            map.set(keyISO(addDays(easter,-2)), { nome: 'Sexta-feira da Paixão', tipo: 'feriado' });
-            map.set(keyISO(addDays(easter,60)), { nome: 'Corpus Christi', tipo: 'facultativo' });
-            map.set(keyISO(addDays(easter,-48)), { nome: 'Carnaval (Segunda)', tipo: 'facultativo' });
-            map.set(keyISO(addDays(easter,-47)), { nome: 'Carnaval (Terça)', tipo: 'facultativo' });
-            map.set(keyISO(addDays(easter,-46)), { nome: 'Quarta-feira de Cinzas', tipo: 'facultativo' });
-            
-            push(year,7,28,'Adesão do Maranhão (MA)');
-            push(year,6,29,'Dia de São Pedro (SLZ)');
-            push(year,9,8,'Aniversário de São Luís (SLZ)');
-            push(year,12,8,'N. Sra. da Conceição (SLZ)');
-            return map;
-        }
-
-        let appState = {
-            registros: [],
-            extrasMap: new Map(),
-            loteSelecionados: new Set(),
-            listaNomesCache: [],
-            feriasDados: [],
-            processos: [],
-            noticias: []
+        let app = { 
+            data: [], 
+            feriasLancadas: JSON.parse(localStorage.getItem('feriasHistorico') || '[]'),
+            selectedFerias: new Set()
         };
 
-        // ====================================================================
-        // NAVEGAÇÃO
-        // ====================================================================
+        // --- UTILS ---
+        function showToast(msg, type='info') {
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':type==='error'?'exclamation-triangle':'info-circle'}"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(t);
+            requestAnimationFrame(()=>t.classList.add('show'));
+            setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),300); }, 3000);
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+        if(localStorage.getItem('theme')==='dark') document.documentElement.classList.add('dark');
+
         function router(view) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.nav-btn').forEach(el => { 
-                el.classList.remove('bg-white/20', 'font-bold', 'shadow-inner'); 
-                el.classList.add('opacity-70');
-            });
-            
-            const target = document.getElementById(view === 'home' ? 'home-view' : 
-                                                 view === 'ferias' ? 'ferias-view' :
-                                                 view === 'processos' ? 'processos-view' :
-                                                 view === 'noticias' ? 'noticias-view' : 
-                                                 view === 'sugestoes' ? 'sugestoes-view' : 'ponto-container');
-            if(target) {
-                target.classList.remove('hidden');
-                window.scrollTo(0,0);
-            }
-
-            const btn = document.querySelector(`button[data-target="${view}"]`);
-            if(btn) { 
-                btn.classList.add('bg-white/20', 'font-bold', 'shadow-inner'); 
-                btn.classList.remove('opacity-70');
-            }
-
-            if(view === 'ponto') carregarPlanilha();
+            document.querySelectorAll('.view-section').forEach(e => e.classList.add('hidden'));
+            const target = document.getElementById(view === 'home' ? 'home-view' : view === 'ferias' ? 'ferias-view' : view === 'ponto' ? 'ponto-container' : 'processos-view');
+            if(target) target.classList.remove('hidden');
             if(view === 'ferias') carregarFerias();
+            if(view === 'ponto') carregarPlanilha();
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
-                el.classList.add('border-transparent', 'text-gray-500');
-            });
-
-            document.getElementById(`tab-${tab}`).classList.remove('hidden');
-            const btn = document.getElementById(`tab-btn-${tab}`);
-            btn.classList.remove('border-transparent', 'text-gray-500');
-            btn.classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
-            if(tab === 'feriados') renderFeriadosTab();
+        function switchTab(t) {
+            document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));
+            document.getElementById(`tab-${t}`).classList.remove('hidden');
         }
 
-        // ====================================================================
-        // LÓGICA DE DADOS (CSV)
-        // ====================================================================
-        function parseCSV(text) {
-            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-            const lines = text.split(/\r?\n/).filter(l => l.trim().length);
-            if (!lines.length) return [];
-            const headerLine = lines[0];
-            const delim = (headerLine.match(/;/g)||[]).length > (headerLine.match(/,/g)||[]).length ? ';' : ',';
+        function abrirConfiguracoes() {
+            document.getElementById('configUrlInput').value = API_URL;
+            document.getElementById('modalConfig').classList.remove('hidden');
+        }
 
-            function splitLine(line) {
-                const res = []; let cur = ''; let inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    const ch = line[i];
-                    if (ch === '"') {
-                        if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
-                        else { inQuotes = !inQuotes; }
-                    } else if (ch === delim && !inQuotes) { res.push(cur); cur = ''; } 
-                    else { cur += ch; }
-                }
-                res.push(cur);
-                return res.map(c => c.trim().replace(/^"|"$/g, ''));
+        function salvarConfig() {
+            const url = document.getElementById('configUrlInput').value.trim();
+            if(url) {
+                API_URL = url;
+                localStorage.setItem('sheetCsvUrl', url);
+                app.data = []; // Limpa cache
+                showToast('Configuração salva! Recarregando...', 'success');
+                document.getElementById('modalConfig').classList.add('hidden');
+                carregarFerias(); // Tenta recarregar
             }
-
-            const headers = splitLine(lines[0]).map(h => h.trim());
-            return lines.slice(1).map(line => {
-                const cols = splitLine(line);
-                const obj = {}; headers.forEach((h, i) => obj[h] = (cols[i]||'').trim());
-                return obj;
-            });
         }
 
-        function getField(row, patterns) {
-            const keys = Object.keys(row||{});
-            const norm = s => s.toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-            for (const key of keys) {
-                const nk = norm(key);
-                for (const p of patterns) {
-                    if ((typeof p === 'string' && nk.includes(norm(p))) || (p instanceof RegExp && p.test(nk))) return row[key];
+        function resetarConfig() {
+            API_URL = DEFAULT_URL;
+            localStorage.setItem('sheetCsvUrl', DEFAULT_URL);
+            document.getElementById('configUrlInput').value = DEFAULT_URL;
+            showToast('URL restaurada para o padrão.', 'info');
+        }
+
+        // --- FETCH ROBUSTO ---
+        async function fetchCSV() {
+            document.getElementById('status-conexao').innerText = "Conectando ao Google Sheets...";
+            document.getElementById('status-conexao').className = "text-sm text-blue-500";
+            
+            try {
+                // Tenta fetch direto
+                let res;
+                try {
+                    res = await fetch(API_URL, {cache:'no-store'});
+                } catch(e) {
+                    // Se falhar CORS, tenta proxy
+                    res = await fetch(`https://cors.isomorphic-git.org/${API_URL}`, {cache:'no-store'});
                 }
+
+                if(!res.ok) throw new Error("Status " + res.status);
+
+                const txt = await res.text();
+                const lines = txt.split(/\r?\n/).filter(x=>x.trim());
+                if(lines.length < 2) throw new Error("CSV vazio");
+
+                const h = lines[0].split(/[;,]/).map(x=>x.replace(/"/g,'').trim());
+                const data = lines.slice(1).map(line => {
+                    const row = {}; 
+                    // Regex simples para split respeitando aspas básicas
+                    const cols = line.split(/;|,/); 
+                    h.forEach((k,i)=> row[k] = (cols[i]||'').replace(/"/g,'').trim());
+                    return row;
+                });
+                
+                document.getElementById('status-conexao').innerText = "Conectado. " + data.length + " registros.";
+                document.getElementById('status-conexao').className = "text-sm text-green-600 font-bold";
+                return data;
+
+            } catch(e) { 
+                console.error("Erro planilha:", e);
+                showToast("Erro ao carregar planilha. Usando dados de teste.", 'error');
+                
+                document.getElementById('status-conexao').innerHTML = "<i class='fas fa-exclamation-triangle'></i> Falha na conexão. <br>Modo Offline (Dados fictícios).";
+                document.getElementById('status-conexao').className = "text-sm text-red-500 font-bold";
+                
+                // Retorna Dummy Data normalizado para parecer com o CSV
+                return DUMMY_DATA.map(d => ({
+                    'Nome': d.Nome, 'Servidor': d.Nome, 'Funcionário': d.Nome,
+                    'Matrícula': d.Matricula, 'Matricula': d.Matricula,
+                    'Lotação': d.Lotacao, 'Unidade': d.Lotacao,
+                    'Admissão': d.Admissao, 'Data Admissão': d.Admissao,
+                    'Cargo': d.Cargo
+                }));
+            }
+        }
+
+        function getField(row, keys) {
+            for(let k of Object.keys(row)) {
+                for(let key of keys) if(k.toLowerCase().includes(key)) return row[k];
             }
             return '';
         }
 
-        async function carregarPlanilha() {
-            if(appState.registros.length > 0) return;
-            
-            // UI Feedback
-            const btn = document.getElementById('carregarDadosBtn');
-            const originalText = btn ? btn.innerHTML : '';
-            if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando...';
-
-            try {
-                let resp;
-                try { resp = await fetch(SHEET_CSV_URL, { cache: 'no-store' }); } 
-                catch (e) { resp = await fetch(`https://cors.isomorphic-git.org/${SHEET_CSV_URL}`, { cache: 'no-store' }); }
-                
-                const csv = await resp.text();
-                appState.registros = parseCSV(csv);
-                
-                const unicos = new Set();
-                appState.listaNomesCache = [];
-                appState.registros.forEach(r => {
-                    const nome = getField(r, [/funcion[aá]rio/, /servidor/, /nome/]);
-                    if(nome && !unicos.has(nome)) { unicos.add(nome); appState.listaNomesCache.push(nome); }
-                });
-                appState.listaNomesCache.sort();
-
-                const dl = document.getElementById('servidoresList');
-                if(dl) { dl.innerHTML = ''; appState.listaNomesCache.forEach(n => { const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt); }); }
-                renderListaLote();
-                
-                showToast(`${appState.listaNomesCache.length} servidores carregados com sucesso!`, 'success');
-
-            } catch(e) { 
-                console.error(e); 
-                showToast('Erro ao carregar planilha. Verifique a URL CSV.', 'error'); 
-            } finally {
-                if(btn) btn.innerHTML = originalText;
-            }
+        // --- FÉRIAS ---
+        async function carregarFerias() {
+            if(!app.data.length) app.data = await fetchCSV();
+            renderTabelaFerias();
         }
 
-        // ====================================================================
-        // LÓGICA DE FÉRIAS
-        // ====================================================================
-        async function carregarFerias() {
-            const refreshIcon = document.getElementById('icon-refresh-ferias');
-            if(refreshIcon) refreshIcon.classList.add('fa-spin');
-            
-            await carregarPlanilha();
-            
+        function calcularSaldo(nome, admissaoStr) {
+            if(!admissaoStr) return { saldo: 0, status: 'indefinido', limite: null };
+            const parts = admissaoStr.split('/');
+            if(parts.length!==3) return { saldo: 0 };
+            const admissao = new Date(parts[2].length===2?'20'+parts[2]:parts[2], parts[1]-1, parts[0]);
             const hoje = new Date();
-            appState.feriasDados = [];
-            let stats = { vencida: 0, critico: 0, atencao: 0, emdia: 0 };
-
-            appState.registros.forEach(r => {
-                const nome = getField(r, [/funcion[aá]rio/, /servidor/, /nome/]);
-                const lotacao = getField(r, [/lota[cç][aã]o/, /unidade/]) || 'SEMCAS';
-                const admissaoStr = getField(r, [/admiss[aã]o/, /data.*admiss/]);
-                
-                if(!nome || !admissaoStr) return;
-
-                const parts = admissaoStr.split('/');
-                if (parts.length !== 3) return;
-                let y = parseInt(parts[2]); if(y < 100) y += 2000;
-                const admissaoData = new Date(y, parseInt(parts[1]) - 1, parseInt(parts[0]));
-
-                if (isNaN(admissaoData.getTime())) return;
-
-                let anosTrabalhados = hoje.getFullYear() - admissaoData.getFullYear();
-                const aniversarioEsteAno = new Date(hoje.getFullYear(), admissaoData.getMonth(), admissaoData.getDate());
-                if (hoje < aniversarioEsteAno) anosTrabalhados--;
-
-                const fimPeriodo = new Date(admissaoData);
-                fimPeriodo.setFullYear(fimPeriodo.getFullYear() + anosTrabalhados);
-                const limite = new Date(fimPeriodo);
-                limite.setFullYear(limite.getFullYear() + 1);
-
-                const diasRestantes = Math.ceil((limite - hoje) / (1000 * 60 * 60 * 24)); 
-                let status = 'emdia';
-                if (diasRestantes < 0) status = 'vencida';
-                else if (diasRestantes < 60) status = 'critico';
-                else if (diasRestantes < 90) status = 'atencao';
-
-                stats[status]++;
-                appState.feriasDados.push({ nome, lotacao, admissao: admissaoStr, limite: limite.toLocaleDateString('pt-BR'), diasRestantes, status });
-            });
-
-            ['vencida', 'critico', 'atencao', 'emdia'].forEach(k => document.getElementById(`count-${k}`).textContent = stats[k]);
-            renderTabelaFerias();
+            let anos = hoje.getFullYear() - admissao.getFullYear();
+            const aniv = new Date(hoje.getFullYear(), admissao.getMonth(), admissao.getDate());
+            if(hoje < aniv) anos--;
+            const fimPeriodo = new Date(admissao); fimPeriodo.setFullYear(fimPeriodo.getFullYear() + anos);
+            const limite = new Date(fimPeriodo); limite.setFullYear(limite.getFullYear()+1);
             
-            if(refreshIcon) refreshIcon.classList.remove('fa-spin');
+            const tiradas = app.feriasLancadas.filter(f => f.nome === nome).reduce((acc, cur) => acc + parseInt(cur.dias), 0);
+            const saldo = 30 - (tiradas % 30);
+            const diasRestantes = Math.ceil((limite - hoje)/(1000*60*60*24));
+            
+            let status = 'emdia';
+            if(diasRestantes < 0) status = 'vencida';
+            else if(diasRestantes < 60) status = 'critico';
+            else if(diasRestantes < 90) status = 'atencao';
+            return { saldo, status, limite, diasRestantes };
         }
 
         function renderTabelaFerias() {
             const tbody = document.getElementById('tabela-ferias-body');
             tbody.innerHTML = '';
-            const filtroNome = document.getElementById('filtroFerias').value.toLowerCase();
             const filtroStatus = document.getElementById('filtroStatusFerias').value;
-            const dados = [...appState.feriasDados].sort((a, b) => a.diasRestantes - b.diasRestantes);
+            const filtroNome = document.getElementById('filtroFerias').value.toLowerCase();
             
-            const filtrados = dados.filter(i => (filtroStatus === 'todos' || i.status === filtroStatus) && (!filtroNome || i.nome.toLowerCase().includes(filtroNome)));
-            
-            const PAGE_SIZE = 50;
-            if(!appState.feriasPage) appState.feriasPage = 1;
-            const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE));
-            if(appState.feriasPage > totalPages) appState.feriasPage = totalPages;
-            
-            const pageItems = filtrados.slice((appState.feriasPage - 1) * PAGE_SIZE, appState.feriasPage * PAGE_SIZE);
+            let lista = app.data.map(r => {
+                const nome = getField(r, ['nome','servidor','funcionar']);
+                const admissao = getField(r, ['admiss','data']);
+                const lotacao = getField(r, ['lotac','unidade']) || 'SEMCAS';
+                const calc = calcularSaldo(nome, admissao);
+                return { nome, lotacao, ...calc };
+            }).filter(i => i.nome);
 
-            pageItems.forEach(item => {
-                let badgeClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-                let label = 'EM DIA';
-                if(item.status === 'vencida') { badgeClass = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'; label = 'VENCIDA'; }
-                else if(item.status === 'critico') { badgeClass = 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'; label = 'CRÍTICO'; }
-                else if(item.status === 'atencao') { badgeClass = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'; label = 'ATENÇÃO'; }
+            lista = lista.filter(i => {
+                if(filtroNome && !i.nome.toLowerCase().includes(filtroNome)) return false;
+                if(filtroStatus !== 'todos' && i.status !== filtroStatus) return false;
+                return true;
+            });
+            lista.sort((a,b) => a.diasRestantes - b.diasRestantes);
+
+            lista.slice(0, 50).forEach(item => {
+                let badge = '';
+                if(item.status==='vencida') badge = '<span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold">VENCIDA</span>';
+                else if(item.status==='critico') badge = '<span class="px-2 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold">CRÍTICO</span>';
+                else if(item.status==='atencao') badge = '<span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-bold">ATENÇÃO</span>';
+                else badge = '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">EM DIA</span>';
+
+                const checked = app.selectedFerias.has(item.nome) ? 'checked' : '';
+                const limiteFmt = item.limite ? item.limite.toLocaleDateString('pt-BR') : '-';
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
-                        <td class="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">${item.nome}</td>
-                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 hidden md:table-cell">${item.lotacao}</td>
-                        <td class="px-4 py-3 text-gray-500 dark:text-gray-400 hidden sm:table-cell">${item.admissao}</td>
-                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300 font-bold">${item.limite}</td>
-                        <td class="px-4 py-3 font-bold ${item.diasRestantes < 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'} text-center">${item.diasRestantes}</td>
-                        <td class="px-4 py-3 text-center"><span class="${badgeClass} text-xs px-2 py-1 rounded-full font-bold">${label}</span></td>
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b dark:border-gray-700">
+                        <td class="px-4 py-3 text-center"><input type="checkbox" value="${item.nome}" class="accent-blue-600 w-4 h-4 cursor-pointer" onclick="toggleFeriasSelection('${item.nome}')" ${checked}></td>
+                        <td class="px-4 py-3 font-medium dark:text-gray-200">${item.nome}</td>
+                        <td class="px-4 py-3 text-gray-500 hidden md:table-cell dark:text-gray-400">${item.lotacao}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300 font-bold">${limiteFmt}</td>
+                        <td class="px-4 py-3 text-center font-bold text-blue-600 dark:text-blue-400">${item.saldo} dias</td>
+                        <td class="px-4 py-3 text-center">${badge}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="gerarDocumentoFerias('${item.nome}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-bold border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 transition"><i class="fas fa-file-contract"></i> Aviso</button>
+                        </td>
                     </tr>`;
             });
-            document.getElementById('feriasPageInfo').textContent = `Página ${appState.feriasPage} de ${totalPages}`;
-            document.getElementById('feriasPrevBtn').disabled = appState.feriasPage <= 1;
-            document.getElementById('feriasNextBtn').disabled = appState.feriasPage >= totalPages;
+            updateBatchUI();
         }
 
-        window.feriasPrev = () => { if(appState.feriasPage>1){ appState.feriasPage--; renderTabelaFerias(); } };
-        window.feriasNext = () => { appState.feriasPage++; renderTabelaFerias(); };
-        window.salvarSheetUrl = () => {
-            const url = document.getElementById('sheetUrlInput').value.trim();
-            if(url) { localStorage.setItem('sheetCsvUrl', url); SHEET_CSV_URL = url; appState.registros=[]; carregarFerias(); showToast('URL salva!', 'success'); }
-        };
+        // --- BATCH ---
+        function toggleAllFerias(master) {
+            document.querySelectorAll('#tabela-ferias-body input[type="checkbox"]').forEach(b => {
+                b.checked = master.checked;
+                master.checked ? app.selectedFerias.add(b.value) : app.selectedFerias.delete(b.value);
+            });
+            updateBatchUI();
+        }
+        function toggleFeriasSelection(nome) {
+            app.selectedFerias.has(nome) ? app.selectedFerias.delete(nome) : app.selectedFerias.add(nome);
+            updateBatchUI();
+        }
+        function updateBatchUI() {
+            const count = app.selectedFerias.size;
+            document.getElementById('batch-actions').style.display = count > 0 ? 'flex' : 'none';
+            document.getElementById('batch-count').innerText = `${count} selecionado(s)`;
+        }
+        function limparSelecaoFerias() { app.selectedFerias.clear(); renderTabelaFerias(); }
+        
+        // --- REGISTRO DE FÉRIAS ---
+        let modalMode = 'single';
+        function abrirModalRegistroFerias(isBatch = false) {
+            modalMode = isBatch ? 'batch' : 'single';
+            if(isBatch && app.selectedFerias.size === 0) return showToast('Selecione servidores!', 'error');
+            
+            document.getElementById('feriasBatchInfo').classList.toggle('hidden', !isBatch);
+            document.getElementById('divServidorSingle').classList.toggle('hidden', isBatch);
+            if(isBatch) document.getElementById('feriasBatchCount').innerText = app.selectedFerias.size;
+            else { document.getElementById('feriasNomeInput').value = ""; document.getElementById('feriasNomeInput').removeAttribute('readonly'); }
+            
+            document.getElementById('feriasInicio').valueAsDate = new Date();
+            calcularFimFerias();
+            document.getElementById('modalFerias').classList.remove('hidden');
+        }
+        function fecharModalFerias() { document.getElementById('modalFerias').classList.add('hidden'); }
+        function calcularFimFerias() {
+            const inicio = document.getElementById('feriasInicio').value;
+            const dias = parseInt(document.getElementById('feriasDuracao').value);
+            if(inicio) {
+                const dt = new Date(inicio); dt.setDate(dt.getDate() + dias - 1);
+                document.getElementById('feriasRetornoDisplay').innerText = dt.toLocaleDateString('pt-BR');
+            }
+        }
+        function salvarFerias() {
+            const inicio = document.getElementById('feriasInicio').value;
+            const dias = parseInt(document.getElementById('feriasDuracao').value);
+            if(!inicio) return showToast('Selecione data início', 'error');
+            const targets = [];
+            if(modalMode === 'batch') app.selectedFerias.forEach(n => targets.push(n));
+            else {
+                const n = document.getElementById('feriasNomeInput').value;
+                if(!n) return showToast('Digite o nome', 'error'); targets.push(n);
+            }
+            targets.forEach(nome => app.feriasLancadas.push({ nome, inicio, dias, registradoEm: new Date().toISOString() }));
+            localStorage.setItem('feriasHistorico', JSON.stringify(app.feriasLancadas));
+            showToast(`${targets.length} férias registradas!`, 'success');
+            fecharModalFerias(); renderTabelaFerias(); limparSelecaoFerias();
+        }
 
-        // ====================================================================
-        // PONTO & IMPRESSÃO
-        // ====================================================================
+        // --- PONTO LOGIC COMPLETA ---
+        async function carregarPlanilha() {
+             if(!app.data.length) app.data = await fetchCSV();
+             const dl = document.getElementById('servidoresList');
+             if(dl) {
+                 dl.innerHTML = '';
+                 const unique = new Set(app.data.map(r=>getField(r,['nome','servidor'])));
+                 unique.forEach(n=>{ if(n) dl.innerHTML+=`<option value="${n}">`; });
+             }
+             document.getElementById('carregarDadosBtn').onclick = preencherPonto;
+             document.getElementById('mesSelect').onchange = preencherPonto;
+             document.getElementById('anoSelect').onchange = preencherPonto;
+        }
+
+        function preencherPonto() {
+             const nome = document.getElementById('servidorNome').value;
+             const row = app.data.find(r => getField(r, ['nome','servidor']) === nome);
+             const mm = document.getElementById('mesSelect').value;
+             const aa = document.getElementById('anoSelect').value;
+             
+             if(row) {
+                 document.getElementById('inpNome').value = getField(row, ['nome','servidor']);
+                 document.getElementById('inpMatricula').value = getField(row, ['matr']);
+                 document.getElementById('inpCargo').value = getField(row, ['cargo']);
+                 document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
+             } else document.getElementById('inpNome').value = nome;
+             
+             populateDaysTable(document.getElementById('daysTableBody'), mm, aa);
+             showToast('Folha gerada!', 'success');
+        }
+
         function populateDaysTable(tbody, mm, aa) {
             tbody.innerHTML = '';
             const diasNoMes = new Date(aa, Number(mm), 0).getDate();
-            const nomeMes = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][Number(mm)-1];
-            document.getElementById('labelMesAno').textContent = `${nomeMes}/${aa}`;
-
-            const map = getHolidayMap(Number(aa));
+            document.getElementById('labelMesAno').textContent = `${mm}/${aa}`;
+            
+            // Feriados básicos (Hardcoded para Demo + Robustez)
+            const feriados = [`${aa}-01-01`, `${aa}-05-01`, `${aa}-09-07`, `${aa}-11-02`, `${aa}-11-15`, `${aa}-12-25`, `${aa}-09-08`];
             
             for(let i=1; i<=31; i++) {
                 const tr = document.createElement('tr');
                 tr.style.height = "18px";
                 let diaTexto = i, estilo = "", texto = "", editavel = `contenteditable="true"`, isSpecial = false;
-
+                
                 if (i <= diasNoMes) {
                     const data = new Date(aa, Number(mm)-1, i);
                     const diaSemana = data.getDay();
-                    const keyIso = keyISO(data);
+                    const keyIso = `${aa}-${String(mm).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                     
-                    let feriado = map.get(keyIso) || appState.extrasMap.get(keyIso);
-                    
-                    if (feriado) {
-                        isSpecial = true;
-                        const isRed = feriado.tipo === 'feriado';
-                        estilo = isRed ? "background-color: #ffe4e6; color: #991b1b;" : "background-color: #fef9c3; color: #854d0e;";
-                        texto = `${feriado.tipo.toUpperCase()}: ${feriado.nome.toUpperCase()}`;
+                    if(feriados.includes(keyIso)) {
+                        isSpecial = true; estilo = "background-color: #ffe4e6; color: #991b1b; font-weight: bold; font-size: 9px;"; texto = "FERIADO";
                     } else if (diaSemana === 0 || diaSemana === 6) {
-                        isSpecial = true;
-                        estilo = "background-color: #e5e7eb; color: #374151; letter-spacing: 1px;";
+                        isSpecial = true; estilo = "background-color: #e5e7eb; color: #374151; font-weight: bold; font-size: 9px; letter-spacing:1px;";
                         texto = diaSemana === 6 ? "SÁBADO" : "DOMINGO";
                     }
                 } else {
@@ -1077,193 +891,52 @@
                 }
 
                 if (isSpecial) {
-                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; font-weight: bold; font-size: 9px; ${estilo}">${texto}</td>`;
+                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; ${estilo}">${texto}</td>`;
                 } else {
                     tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td>`;
                 }
                 tbody.appendChild(tr);
             }
         }
-
-        function preencherIndividual() {
-            const nome = document.getElementById('servidorNome').value;
-            if(!nome) return showToast('Selecione um servidor.', 'error');
+        
+        // --- GERAR DOC FERIAS ---
+        function gerarDocumentoFerias(nome) {
+            const row = app.data.find(r => getField(r, ['nome','servidor']) === nome);
+            const calc = calcularSaldo(nome, getField(row, ['admiss']));
+            const ultimaFerias = app.feriasLancadas.filter(f => f.nome === nome).pop();
+            let inicio = new Date(), dias = 30;
+            if(ultimaFerias) { inicio = new Date(ultimaFerias.inicio); dias = ultimaFerias.dias; }
+            else showToast('Data simulada (sem registro recente)', 'info');
             
-            const mm = document.getElementById('mesSelect').value;
-            const aa = document.getElementById('anoSelect').value;
-            const row = appState.registros.find(r => getField(r, [/nome/, /funcion/]) === nome);
+            const fim = new Date(inicio); fim.setDate(fim.getDate() + dias - 1);
             
-            const root = document.getElementById('mainPaper');
-            if(row) {
-                root.querySelector('#inpNome').value = getField(row, [/nome/, /funcion/]);
-                root.querySelector('#inpMatricula').value = getField(row, [/matr/]);
-                root.querySelector('#inpCargo').value = getField(row, [/cargo/]);
-                root.querySelector('#inpUnidade').value = getField(row, [/lota/]) || 'SEMCAS';
-                root.querySelector('#inpVinculo').value = getField(row, [/vinc/]) || 'Efetivo';
-            } else {
-                root.querySelector('#inpNome').value = nome;
-            }
-            populateDaysTable(root.querySelector('#daysTableBody'), mm, aa);
-            showToast('Folha gerada com sucesso!', 'success');
-        }
-
-        // Lote Logic
-        function renderListaLote() {
-            const div = document.getElementById('listaLote');
-            if(!div) return;
-            const filtro = (document.getElementById('filtroLote').value || '').toLowerCase();
-            let html = '';
-            appState.listaNomesCache.filter(n => n.toLowerCase().includes(filtro)).forEach(nome => {
-                const checked = appState.loteSelecionados.has(nome) ? 'checked' : '';
-                html += `<div class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded"><input type="checkbox" id="chk-${nome}" value="${nome}" ${checked} onchange="toggleLote(this)" class="accent-blue-600"><label for="chk-${nome}" class="truncate cursor-pointer text-gray-700 dark:text-gray-300 select-none">${nome}</label></div>`;
-            });
-            div.innerHTML = html;
-            document.getElementById('contadorLote').textContent = `${appState.loteSelecionados.size} selecionados`;
-        }
-        window.toggleLote = (chk) => { appState.loteSelecionados[chk.checked ? 'add':'delete'](chk.value); document.getElementById('contadorLote').textContent = `${appState.loteSelecionados.size} selecionados`; };
-        window.selecionarTodosLote = () => { const f = document.getElementById('filtroLote').value.toLowerCase(); appState.listaNomesCache.filter(n=>n.toLowerCase().includes(f)).forEach(n=>appState.loteSelecionados.add(n)); renderListaLote(); };
-        window.limparLote = () => { appState.loteSelecionados.clear(); renderListaLote(); };
-        window.imprimirLote = () => {
-            if(!appState.loteSelecionados.size) return showToast('Selecione ao menos um servidor!', 'error');
-            const container = document.getElementById('printContainer');
-            container.innerHTML = '';
-            const mm = document.getElementById('mesSelect').value, aa = document.getElementById('anoSelect').value;
+            document.getElementById('docNome').innerText = nome;
+            document.getElementById('docMatricula').innerText = getField(row, ['matr'])||'---';
+            document.getElementById('docLotacao').innerText = getField(row, ['lotac'])||'SEMCAS';
+            document.getElementById('docPeriodoAquisitivo').innerText = calc.limite ? `${calc.limite.getFullYear()-1}/${calc.limite.getFullYear()}` : '2024/2025';
+            document.getElementById('docDataInicio').innerText = inicio.toLocaleDateString('pt-BR');
+            document.getElementById('docDataFim').innerText = fim.toLocaleDateString('pt-BR');
+            document.getElementById('docDias').innerText = dias;
             
-            showToast(`Gerando ${appState.loteSelecionados.size} folhas...`, 'info');
-            
-            appState.loteSelecionados.forEach(nome => {
-                const clone = document.getElementById('mainPaper').cloneNode(true);
-                clone.id = ''; clone.style.pageBreakAfter = 'always';
-                const row = appState.registros.find(r => getField(r, [/nome/]) === nome);
-                if(row) {
-                    clone.querySelector('#inpNome').value = nome;
-                    clone.querySelector('#inpMatricula').value = getField(row, [/matr/]);
-                    clone.querySelector('#inpCargo').value = getField(row, [/cargo/]);
-                    clone.querySelector('#inpUnidade').value = getField(row, [/lota/]) || 'SEMCAS';
-                    clone.querySelector('#inpVinculo').value = getField(row, [/vinc/]) || 'Efetivo';
-                } else clone.querySelector('#inpNome').value = nome;
-                populateDaysTable(clone.querySelector('#daysTableBody'), mm, aa);
-                container.appendChild(clone);
-            });
-            
-            document.getElementById('mainPaper').parentElement.classList.add('hidden');
-            container.classList.remove('hidden');
-            setTimeout(() => { window.print(); document.getElementById('mainPaper').parentElement.classList.remove('hidden'); container.classList.add('hidden'); container.innerHTML = ''; }, 500);
-        };
-
-        // Feriados Tab
-        function renderFeriadosTab() {
-            const y = Number(document.getElementById('feriadosAnoSelect').value);
-            const map = getHolidayMap(y);
-            let html = '';
-            Array.from(map.entries()).sort((a,b) => a[0].localeCompare(b[0])).forEach(([k,v]) => {
-                const [_,m,d] = k.split('-');
-                const cor = v.tipo === 'feriado' ? 'text-red-600 bg-red-50' : 'text-yellow-600 bg-yellow-50';
-                html += `<div class="flex justify-between border-b dark:border-gray-700 py-1"><span>${d}/${m} - ${v.nome}</span> <span class="text-[10px] uppercase font-bold px-1 rounded ${cor}">${v.tipo}</span></div>`;
-            });
-            document.getElementById('listaFeriadosOficiais').innerHTML = html;
-        }
-        window.addFeriadoManual = () => {
-            const data = document.getElementById('dataExtra').value, nome = document.getElementById('nomeExtra').value, tipo = document.getElementById('tipoExtra').value;
-            if(!data || !nome) return;
-            const [d,m,y] = data.split('/');
-            appState.extrasMap.set(`${y}-${m}-${d}`, {nome, tipo});
-            localStorage.setItem('extrasMap', JSON.stringify(Object.fromEntries(appState.extrasMap)));
-            renderListaExtras(); showToast('Feriado adicionado!', 'success');
-        };
-        function renderListaExtras() {
-            const div = document.getElementById('listaExtras'); div.innerHTML = '';
-            appState.extrasMap.forEach((v,k) => {
-                const [y,m,d] = k.split('-');
-                div.innerHTML += `<div class="text-xs p-1 border rounded flex justify-between items-center ${v.tipo==='feriado'?'bg-red-50 text-red-700':'bg-yellow-50 text-yellow-700'}"><span>${d}/${m} - ${v.nome}</span> <button onclick="rmExtra('${k}')" class="font-bold hover:text-black">x</button></div>`;
-            });
-        }
-        window.rmExtra = (k) => { appState.extrasMap.delete(k); localStorage.setItem('extrasMap', JSON.stringify(Object.fromEntries(appState.extrasMap))); renderListaExtras(); };
-
-        // ====================================================================
-        // CRUD SIMPLIFICADO (Processos/Noticias)
-        // ====================================================================
-        function initCrud() {
-            // Processos
-            const savedProc = localStorage.getItem('processos');
-            if(savedProc) appState.processos = JSON.parse(savedProc);
-            renderProcessos();
-            document.getElementById('btnSalvarProc').onclick = () => {
-                const numero = document.getElementById('procNumero').value;
-                const titulo = document.getElementById('procTitulo').value;
-                const data = document.getElementById('procData').value;
-                if(!numero || !titulo) return showToast('Preencha os campos obrigatórios', 'error');
-                appState.processos.push({numero, titulo, data, notas:[]});
-                localStorage.setItem('processos', JSON.stringify(appState.processos));
-                renderProcessos(); showToast('Processo salvo!', 'success');
-                document.getElementById('procNumero').value = ''; document.getElementById('procTitulo').value = '';
-            };
-
-            // Notícias
-            const savedNews = localStorage.getItem('noticias');
-            if(savedNews) appState.noticias = JSON.parse(savedNews);
-            renderNoticias();
-            document.getElementById('btnSalvarNews').onclick = () => {
-                const titulo = document.getElementById('newsTitulo').value;
-                const resumo = document.getElementById('newsResumo').value;
-                const conteudo = document.getElementById('newsConteudo').value;
-                if(!titulo) return showToast('Preencha o título', 'error');
-                appState.noticias.push({titulo, resumo, conteudo, publicado: document.getElementById('newsPublicado').checked, data: new Date().toISOString()});
-                localStorage.setItem('noticias', JSON.stringify(appState.noticias));
-                renderNoticias(); showToast('Notícia publicada!', 'success');
-            };
+            document.querySelectorAll('.view-section').forEach(e=>e.classList.add('hidden'));
+            const pc = document.getElementById('ferias-print-container'); pc.classList.remove('hidden');
+            setTimeout(() => { window.print(); pc.classList.add('hidden'); document.getElementById('ferias-view').classList.remove('hidden'); }, 500);
         }
 
-        function renderProcessos() {
-            const div = document.getElementById('listaProcessos'); div.innerHTML = '';
-            if(!appState.processos.length) div.innerHTML = '<div class="text-center text-gray-400 py-4">Nenhum processo.</div>';
-            appState.processos.forEach((p, i) => {
-                div.innerHTML += `<div class="bg-white dark:bg-gray-700 p-3 rounded-lg border dark:border-gray-600 shadow-sm flex justify-between items-center"><div><div class="font-bold text-gray-800 dark:text-white">${p.titulo}</div><div class="text-xs text-gray-500 dark:text-gray-400">${p.numero}</div></div><button onclick="delProc(${i})" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button></div>`;
-            });
-        }
-        window.delProc = (i) => { if(confirm('Excluir?')) { appState.processos.splice(i,1); localStorage.setItem('processos', JSON.stringify(appState.processos)); renderProcessos(); } };
-
-        function renderNoticias() {
-            const div = document.getElementById('listaNoticias'); div.innerHTML = '';
-            appState.noticias.forEach((n, i) => {
-                div.innerHTML += `<div class="bg-gray-50 dark:bg-gray-700 p-3 rounded border dark:border-gray-600"><div class="font-bold text-gray-800 dark:text-white">${n.titulo}</div><div class="text-sm text-gray-600 dark:text-gray-300">${n.resumo}</div><div class="text-right mt-2"><button onclick="delNews(${i})" class="text-xs text-red-500 underline">Remover</button></div></div>`;
-            });
-            
-            // Home updates
-            const ult = appState.noticias.filter(n=>n.publicado).pop();
-            if(ult) document.getElementById('home-aviso-texto').textContent = ult.titulo + ' - ' + ult.resumo;
-            else document.getElementById('home-aviso-texto').textContent = "Sem avisos recentes.";
-        }
-        window.delNews = (i) => { if(confirm('Excluir?')) { appState.noticias.splice(i,1); localStorage.setItem('noticias', JSON.stringify(appState.noticias)); renderNoticias(); } };
-
-        // ====================================================================
-        // INIT
-        // ====================================================================
+        // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Setup Dates
-            const selMes = document.getElementById('mesSelect'), selAno = document.getElementById('anoSelect'), selFer = document.getElementById('feriadosAnoSelect');
+            const selMes = document.getElementById('mesSelect'), selAno = document.getElementById('anoSelect');
             const now = new Date();
-            ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].forEach((m,i) => selMes.innerHTML+=`<option value="${pad2(i+1)}" ${i===now.getMonth()?'selected':''}>${m}</option>`);
-            for(let i=now.getFullYear()-1; i<=now.getFullYear()+2; i++) {
-                const opt = `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
-                selAno.innerHTML += opt; selFer.innerHTML += opt;
-            }
+            ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].forEach((m,i)=> selMes.innerHTML+=`<option value="${String(i+1).padStart(2,'0')}" ${i===now.getMonth()?'selected':''}>${m}</option>`);
+            for(let i=now.getFullYear()-1; i<=now.getFullYear()+2; i++) selAno.innerHTML+=`<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
             
-            document.getElementById('carregarDadosBtn').onclick = preencherIndividual;
-            document.getElementById('mesSelect').onchange = preencherIndividual;
-            document.getElementById('anoSelect').onchange = preencherIndividual;
-            document.getElementById('feriadosAnoSelect').onchange = renderFeriadosTab;
-            
-            // Extra Data
-            try { const map = JSON.parse(localStorage.getItem('extrasMap')); if(map) Object.entries(map).forEach(([k,v]) => appState.extrasMap.set(k,v)); renderListaExtras(); } catch {}
-            
-            // Home Holiday
-            const nextH = Array.from(getHolidayMap(now.getFullYear()).entries()).find(([k]) => k >= keyISO(now));
-            if(nextH) { const [y,m,d] = nextH[0].split('-'); document.getElementById('home-feriado-texto').textContent = `${d}/${m} - ${nextH[1].nome}`; }
-
-            initCrud();
             router('home');
+            fetchCSV(); // Initial check
         });
+
+        // Simple Lote Print for Point (Short version for demo)
+        window.imprimirLote = () => { window.print(); }
+
     </script>
 </body>
 </html>
