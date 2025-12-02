@@ -180,9 +180,6 @@
                         <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition">
                             <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
                         </button>
-                        <button onclick="abrirConfiguracoes()" class="p-2 rounded-lg hover:bg-white/10 transition">
-                            <i class="fas fa-cog"></i>
-                        </button>
                     </div>
                 </div>
 
@@ -199,9 +196,6 @@
                     <div class="hidden md:flex gap-2 ml-2">
                         <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-white/10 transition" title="Tema">
                             <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:inline text-yellow-300"></i>
-                        </button>
-                        <button onclick="abrirConfiguracoes()" class="p-2 rounded-lg hover:bg-white/10 transition" title="Configurar Fonte de Dados">
-                            <i class="fas fa-cog"></i>
                         </button>
                     </div>
                 </div>
@@ -232,7 +226,6 @@
                     </div>
                     <h3 class="font-bold text-gray-800 dark:text-white mb-1">Status da Conexão</h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400" id="status-conexao">Verificando dados...</p>
-                    <button onclick="abrirConfiguracoes()" class="text-xs text-blue-600 underline mt-2">Configurar Planilha</button>
                 </div>
                 <!-- Card Folha -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
@@ -383,8 +376,7 @@
                 </div>
                 <div id="tab-folha" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded">
-                        <div class="md:col-span-5"><label class="text-xs font-bold">Servidor</label><input id="servidorNome" list="servidoresList" class="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white">
-                        <datalist id="servidoresList"></datalist>
+                        <div class="md:col-span-5"><label class="text-xs font-bold">Servidor</label><select id="servidorSelect" class="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white"></select>
                         </div>
                         <div class="md:col-span-2"><button id="carregarDadosBtn" class="w-full bg-blue-600 text-white py-2 rounded font-bold text-sm">Preencher</button></div>
                         <div class="md:col-span-5 flex gap-2">
@@ -576,7 +568,36 @@
         // *** AQUI ESTÁ O AJUSTE AUTOMÁTICO DO LINK ***
         // O usuário forneceu um link 'pubhtml', mas precisamos do 'pub?output=csv'
         const DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjyCxbgnAsHpVZsAzU_VzGi7D-TXnaPciKUWudnp5thY6N53R8laj-aWB8IF_pQPCTevKdOro8rGAM/pub?output=csv';
-        let API_URL = localStorage.getItem('sheetCsvUrl') || DEFAULT_URL;
+        function normalizeSheetUrl(url) {
+            if (!url) return DEFAULT_URL;
+            let u = url.trim();
+            if (u.includes('output=csv')) return u;
+            try {
+                const x = new URL(u);
+                if (x.hostname.includes('docs.google.com') && x.pathname.includes('/spreadsheets')) {
+                    if (x.pathname.includes('/pubhtml')) {
+                        x.pathname = x.pathname.replace('/pubhtml', '/pub');
+                        x.search = '?output=csv';
+                        return x.toString();
+                    }
+                    if (x.pathname.includes('/edit')) {
+                        x.pathname = x.pathname.replace('/edit', '/export');
+                        x.searchParams.set('format', 'csv');
+                        return x.toString();
+                    }
+                    if (x.pathname.includes('/export')) {
+                        x.searchParams.set('format', 'csv');
+                        return x.toString();
+                    }
+                    if (x.pathname.includes('/pub') && !x.search.includes('output=')) {
+                        x.search = '?output=csv';
+                        return x.toString();
+                    }
+                }
+            } catch(e) {}
+            return u;
+        }
+        let API_URL = normalizeSheetUrl(DEFAULT_URL);
 
         let app = { 
             data: [], 
@@ -619,7 +640,7 @@
         }
 
         function salvarConfig() {
-            const url = document.getElementById('configUrlInput').value.trim();
+            const url = normalizeSheetUrl(document.getElementById('configUrlInput').value.trim());
             if(url) {
                 API_URL = url;
                 localStorage.setItem('sheetCsvUrl', url);
@@ -655,15 +676,11 @@
                 if(!res.ok) throw new Error("Status " + res.status);
 
                 const txt = await res.text();
-                const lines = txt.split(/\r?\n/).filter(x=>x.trim());
-                if(lines.length < 2) throw new Error("CSV vazio");
-
-                const h = lines[0].split(/[;,]/).map(x=>x.replace(/"/g,'').trim());
-                const data = lines.slice(1).map(line => {
-                    const row = {}; 
-                    // Regex simples para split respeitando aspas básicas
-                    const cols = line.split(/;|,/); 
-                    h.forEach((k,i)=> row[k] = (cols[i]||'').replace(/"/g,'').trim());
+                const { headers, rows } = parseCSV(txt);
+                if(headers.length === 0 || rows.length === 0) throw new Error("CSV vazio");
+                const data = rows.map(cols => {
+                    const row = {};
+                    headers.forEach((k,i)=> row[k] = (cols[i]||'').trim());
                     return row;
                 });
                 
@@ -689,10 +706,55 @@
             }
         }
 
-        function getField(row, keys) {
-            for(let k of Object.keys(row)) {
-                for(let key of keys) if(k.toLowerCase().includes(key)) return row[k];
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.length > 0);
+            if(lines.length === 0) return { headers: [], rows: [] };
+            const first = lines[0];
+            const delimiter = (first.includes(';') && !first.includes(',')) ? ';' : ',';
+            const headers = splitRow(first, delimiter).map((x, i) => x.replace(/^\uFEFF/, '').replace(/"/g,'').trim());
+            const rows = [];
+            for(let i=1;i<lines.length;i++) {
+                const cols = splitRow(lines[i], delimiter).map(x => x.replace(/"/g,''));
+                rows.push(cols);
             }
+            return { headers, rows };
+        }
+
+        function splitRow(line, delimiter) {
+            const out = [];
+            let cur = '';
+            let inQuotes = false;
+            for(let i=0;i<line.length;i++) {
+                const ch = line[i];
+                if(ch === '"') {
+                    if(inQuotes && i+1 < line.length && line[i+1] === '"') { cur += '"'; i++; }
+                    else inQuotes = !inQuotes;
+                } else if(ch === delimiter && !inQuotes) {
+                    out.push(cur); cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            out.push(cur);
+            return out;
+        }
+
+        function normalizeKeyName(s) {
+            return s.toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .replace(/[^a-z0-9]/g,'');
+        }
+        function getField(row, keys) {
+            const normalized = Object.keys(row).map(k => ({ k, n: normalizeKeyName(k) }));
+            for(const {k, n} of normalized) {
+                for(const key of keys) {
+                    const kn = normalizeKeyName(key);
+                    if(n.includes(kn)) return row[k];
+                }
+            }
+            // Fallback: tenta primeira coluna com valor "nome" (tem espaço e letras)
+            const firstVal = row[Object.keys(row)[0]];
+            if(keys.includes('nome') && typeof firstVal === 'string' && /[a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+/.test(firstVal)) return firstVal;
             return '';
         }
 
@@ -834,11 +896,21 @@
         // --- PONTO LOGIC COMPLETA ---
         async function carregarPlanilha() {
              if(!app.data.length) app.data = await fetchCSV();
-             const dl = document.getElementById('servidoresList');
-             if(dl) {
-                 dl.innerHTML = '';
-                 const unique = new Set(app.data.map(r=>getField(r,['nome','servidor'])));
-                 unique.forEach(n=>{ if(n) dl.innerHTML+=`<option value="${n}">`; });
+             const sel = document.getElementById('servidorSelect');
+             if(sel) {
+                 const names = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario']).trim()).filter(Boolean))).sort();
+                 sel.innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
+                 if(sel.options.length>0 && sel.selectedIndex<0) sel.selectedIndex = 0;
+             }
+             const lista = document.getElementById('listaLote');
+             const filtro = document.getElementById('filtroLote');
+             if(lista) {
+                 const names = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario']).trim()).filter(Boolean))).sort();
+                 lista.innerHTML = names.map(n=>`<div>${n}</div>`).join('');
+                 if(filtro) filtro.oninput = () => {
+                     const q = filtro.value.toLowerCase();
+                     lista.innerHTML = names.filter(n=>n.toLowerCase().includes(q)).map(n=>`<div>${n}</div>`).join('');
+                 };
              }
              document.getElementById('carregarDadosBtn').onclick = preencherPonto;
              document.getElementById('mesSelect').onchange = preencherPonto;
@@ -846,13 +918,14 @@
         }
 
         function preencherPonto() {
-             const nome = document.getElementById('servidorNome').value;
-             const row = app.data.find(r => getField(r, ['nome','servidor']) === nome);
+             const sel = document.getElementById('servidorSelect');
+             const nome = sel ? sel.value : document.getElementById('servidorNome').value;
+             const row = app.data.find(r => getField(r, ['nome','servidor','funcionar','funcion','funcionario']) === nome);
              const mm = document.getElementById('mesSelect').value;
              const aa = document.getElementById('anoSelect').value;
              
              if(row) {
-                 document.getElementById('inpNome').value = getField(row, ['nome','servidor']);
+                 document.getElementById('inpNome').value = getField(row, ['nome','servidor','funcionar','funcion','funcionario']);
                  document.getElementById('inpMatricula').value = getField(row, ['matr']);
                  document.getElementById('inpCargo').value = getField(row, ['cargo']);
                  document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
@@ -860,7 +933,7 @@
              
              populateDaysTable(document.getElementById('daysTableBody'), mm, aa);
              showToast('Folha gerada!', 'success');
-        }
+       }
 
         function populateDaysTable(tbody, mm, aa) {
             tbody.innerHTML = '';
@@ -931,7 +1004,7 @@
             for(let i=now.getFullYear()-1; i<=now.getFullYear()+2; i++) selAno.innerHTML+=`<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
             
             router('home');
-            fetchCSV(); // Initial check
+            fetchCSV().then(d => { app.data = d; });
         });
 
         // Simple Lote Print for Point (Short version for demo)
