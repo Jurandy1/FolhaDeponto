@@ -65,15 +65,17 @@
         .page {
             width: 210mm;
             min-width: 210mm;
-            height: 297mm;
+            height: 297mm; /* Altura exata A4 */
             background: var(--bg-paper);
             color: var(--color-text-paper);
-            padding: 15mm 20mm; /* Margens padrão ABNT/Oficial */
+            padding: 10mm 15mm; /* Margens ajustadas para maximizar espaço */
             box-sizing: border-box;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             margin: 0 auto;
-            font-family: 'Times New Roman', Times, serif; /* Fonte Oficial para Documentos */
+            font-family: 'Arial', sans-serif; /* Fonte mais limpa para formulários */
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Tabela Folha de Ponto */
@@ -81,17 +83,22 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            border: 2px solid var(--border-paper);
-            font-family: Arial, Helvetica, sans-serif; /* Ponto usa Arial */
+            border: 1px solid var(--border-paper);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
         }
         .folha-table td, .folha-table th {
             border: 1px solid var(--border-paper);
             padding: 2px 4px;
-            font-size: 11px;
             vertical-align: middle;
             color: var(--color-text-paper);
             overflow: hidden;
             white-space: nowrap;
+        }
+
+        /* Ajuste de altura para escrita manual */
+        .linha-dia {
+            height: 24px; /* Altura suficiente para rubrica manual */
         }
         
         /* Documento de Férias */
@@ -107,6 +114,7 @@
         .input-linha {
             border: none; border-bottom: 1px solid #ccc; background: transparent;
             font-family: inherit; font-size: 11px; font-weight: bold; width: 100%; outline: none;
+            text-transform: uppercase;
         }
         .input-linha:focus { border-bottom-color: #000; background-color: rgba(59, 130, 246, 0.1); }
         td[contenteditable="true"]:focus { background-color: #e8f0fe; outline: 2px solid #3b82f6; }
@@ -115,6 +123,26 @@
         .bg-gray-folha { background-color: #e5e7eb !important; font-weight: bold; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .bg-white-header { background-color: #fff !important; font-weight: bold; text-align: center; }
         .bg-white-cell { background-color: #fff !important; }
+
+        /* Estilo do Rodapé Igual à Foto */
+        .footer-box {
+            border: 1px solid #000;
+            height: 100px; /* Altura fixa para as assinaturas */
+            vertical-align: top !important;
+            padding: 5px !important;
+            position: relative;
+        }
+        .footer-title {
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        .footer-date {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 11px;
+        }
 
         /* --- TOAST --- */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -138,7 +166,7 @@
             
             .page-wrapper { display: block; width: 100%; padding: 0; margin: 0; }
             .page { 
-                margin: 0; border: none; box-shadow: none; width: 100%; height: 297mm; padding: 15mm 20mm; 
+                margin: 0; border: none; box-shadow: none; width: 100%; height: 295mm; padding: 10mm 15mm; 
                 page-break-after: always;
             }
             .input-linha { border-bottom: none; }
@@ -412,53 +440,84 @@
             <!-- Folha de Ponto Layout A4 -->
             <div class="page-wrapper no-print:mt-4">
                 <div class="page" id="mainPaper">
+                    <!-- Cabeçalho Principal -->
                     <table class="folha-table">
-                        <tr><td class="bg-gray-folha titulo-folha" style="width: 70%;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td><td class="bg-white-header"><span id="labelMesAno">NOV/2025</span></td></tr>
-                        <tr><td colspan="2" class="bg-white-header">Secretaria Municipal da Criança e Assistência Social/ SEMCAS</td></tr>
-                        <tr><td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha"></td><td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width:80px"></td></tr>
-                        <tr><td class="bg-white-cell">Cargo: <input id="inpCargo" class="input-linha"></td><td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha"></td></tr>
+                        <tr style="height: 30px;">
+                            <td class="bg-gray-folha" style="width: 75%; font-size: 14px;">REGISTRO INDIVIDUAL DE FREQUÊNCIA</td>
+                            <td class="bg-white-header" style="font-size: 11px;">Mês/Ano: <span id="labelMesAno" style="margin-left: 5px; font-weight: normal;">NOV/2025</span></td>
+                        </tr>
+                        <tr style="height: 25px;">
+                            <td colspan="2" class="bg-white-header" style="text-align: left; padding-left: 10px;">Órgão Municipal: Secretaria Municipal da Criança e Assistência Social / SEMCAS</td>
+                        </tr>
+                        <tr style="height: 25px;">
+                            <td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha" style="width: 90%;"></td>
+                            <td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width: 80%;"></td>
+                        </tr>
+                        <tr style="height: 25px;">
+                            <td class="bg-white-cell">Cargo/Função: <input id="inpCargo" class="input-linha" style="width: 80%;"></td>
+                            <td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha" style="width: 80%;"></td>
+                        </tr>
+                         <tr style="height: 25px;">
+                            <td colspan="2" class="bg-white-cell">Unidade Administrativa: <input id="inpLotacao" class="input-linha" style="width: 80%;"></td>
+                        </tr>
                     </table>
-                    <table class="folha-table" style="margin-top: -1px;">
+
+                    <!-- Tabela de Dias -->
+                    <table class="folha-table" style="margin-top: -1px; width: 100%;">
                         <colgroup>
-                            <col class="col-dia">
-                            <col class="col-hora"><col class="col-rubrica">
-                            <col class="col-hora"><col class="col-rubrica">
-                            <col class="col-hora"><col class="col-rubrica">
-                            <col class="col-hora"><col class="col-rubrica">
+                            <col style="width: 30px;"> <!-- Dia -->
+                            <col style="width: 50px;"> <!-- Hora M -->
+                            <col> <!-- Rubrica M -->
+                            <col style="width: 50px;"> <!-- Hora M -->
+                            <col> <!-- Rubrica M -->
+                            <col style="width: 50px;"> <!-- Hora T -->
+                            <col> <!-- Rubrica T -->
+                            <col style="width: 50px;"> <!-- Hora T -->
+                            <col> <!-- Rubrica T -->
                         </colgroup>
                         <thead>
-                            <tr class="bg-white-header">
-                                <th rowspan="3">Dia</th>
-                                <th colspan="8">Horário de Trabalho</th>
+                            <tr class="bg-gray-folha" style="height: 20px;">
+                                <th colspan="9">Horário de Trabalho</th>
                             </tr>
-                            <tr class="bg-white-header">
+                            <tr class="bg-gray-folha" style="height: 20px;">
+                                <th rowspan="2" style="background-color: #fff;"></th>
                                 <th colspan="4">Manhã</th>
                                 <th colspan="4">Tarde</th>
                             </tr>
-                            <tr class="bg-white-header">
-                                <th colspan="2" style="font-size: 10px;">Entrada:<br>08:00</th>
-                                <th colspan="2" style="font-size: 10px;">Saída:<br>12:00</th>
-                                <th colspan="2" style="font-size: 10px;">Entrada:<br>14:00</th>
-                                <th colspan="2" style="font-size: 10px;">Saída:<br>18:00</th>
+                            <tr class="bg-white-header" style="height: 35px;">
+                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Entrada:<br><span style="margin-left: 30px;">08:00</span></th>
+                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Saída:<br><span style="margin-left: 30px;">12:00</span></th>
+                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Entrada:<br><span style="margin-left: 30px;">14:00</span></th>
+                                <th colspan="2" style="font-size: 10px; text-align: left; padding-left: 5px;">Saída:<br><span style="margin-left: 30px;">18:00</span></th>
                             </tr>
-                            <tr class="bg-gray-folha">
+                            <tr class="bg-gray-folha" style="height: 20px;">
+                                <th>Dia</th>
+                                <th colspan="2">Manhã</th>
+                                <th colspan="2"></th>
+                                <th colspan="2">Tarde</th>
+                                <th colspan="2"></th>
+                            </tr>
+                            <tr class="bg-white-header" style="font-size: 9px; height: 18px;">
                                 <th></th>
-                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
-                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
-                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
-                                <th style="font-size: 9px;">Hora</th> <th style="font-size: 9px;">Rubrica</th>
+                                <th>Hora</th> <th>Rubrica</th>
+                                <th>Hora</th> <th>Rubrica</th>
+                                <th>Hora</th> <th>Rubrica</th>
+                                <th>Hora</th> <th>Rubrica</th>
                             </tr>
                         </thead>
                         <tbody id="daysTableBody"></tbody>
                     </table>
-                    <!-- Assinaturas -->
-                    <table class="footer-table" style="width:100%; border-collapse:collapse; margin-top:-1px;">
+
+                    <!-- Assinaturas / Rodapé -->
+                    <table class="folha-table" style="margin-top: -1px; width: 100%;">
                          <tr>
-                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
-                                <div style="font-weight: bold; font-size: 11px;">Chefia Imediata:</div>
+                            <td class="footer-box" style="width: 50%;">
+                                <div class="footer-title">Chefia Imediata:</div>
+                                <div class="footer-date">São Luís, _______/_______/_____________</div>
                             </td>
-                            <td class="box-assinatura" style="border:1px solid #000; height:80px; vertical-align:top; padding:5px; width:50%;">
-                                <div style="font-weight: bold; font-size: 11px;">Visto RH:</div>
+                            <td class="footer-box" style="width: 50%;">
+                                <div class="footer-title">Visto (Área de Recursos Humanos):</div>
+                                <div class="footer-date">São Luís, _______/_______/_____________</div>
                             </td>
                         </tr>
                     </table>
@@ -952,7 +1011,8 @@
                  document.getElementById('inpNome').value = getField(row, ['nome','servidor','funcionar','funcion','funcionario']);
                  document.getElementById('inpMatricula').value = getField(row, ['matr']);
                  document.getElementById('inpCargo').value = getField(row, ['cargo']);
-                 document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
+                 document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'SERVIÇO PRESTADO';
+                 document.getElementById('inpLotacao').value = getField(row, ['lotac','unidade']) || 'SUPORTE E LOGISTICA';
              } else document.getElementById('inpNome').value = nome;
              
              populateDaysTable(document.getElementById('daysTableBody'), mm, aa);
@@ -962,13 +1022,17 @@
         function populateDaysTable(tbody, mm, aa) {
             tbody.innerHTML = '';
             const diasNoMes = new Date(aa, Number(mm), 0).getDate();
-            document.getElementById('labelMesAno').textContent = `${mm}/${aa}`;
+            const meses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
+            document.getElementById('labelMesAno').textContent = `${meses[Number(mm)-1]}/${aa}`;
             
-            const feriadosSet = new Set(getHolidayISOList(parseInt(aa)).map(h=>h.date));
-            
+            // Criar um mapa de feriados para recuperar o nome
+            const feriadosList = getHolidayISOList(parseInt(aa));
+            const feriadosMap = new Map(feriadosList.map(h => [h.date, h.nome]));
+
             for(let i=1; i<=31; i++) {
                 const tr = document.createElement('tr');
-                tr.style.height = "18px";
+                tr.classList.add('linha-dia');
+                
                 let diaTexto = i, estilo = "", texto = "", editavel = `contenteditable="true"`, isSpecial = false;
                 
                 if (i <= diasNoMes) {
@@ -976,10 +1040,13 @@
                     const diaSemana = data.getDay();
                     const keyIso = `${aa}-${String(mm).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                     
-                    if(feriadosSet.has(keyIso)) {
-                        isSpecial = true; estilo = "background-color: #ffe4e6; color: #991b1b; font-weight: bold; font-size: 9px;"; texto = "FERIADO";
+                    if(feriadosMap.has(keyIso)) {
+                        isSpecial = true; 
+                        estilo = "background-color: #fff; font-weight: bold; font-size: 10px; letter-spacing: 1px; color: #000;"; 
+                        texto = feriadosMap.get(keyIso).toUpperCase();
                     } else if (diaSemana === 0 || diaSemana === 6) {
-                        isSpecial = true; estilo = "background-color: #e5e7eb; color: #374151; font-weight: bold; font-size: 9px; letter-spacing:1px;";
+                        isSpecial = true; 
+                        estilo = "background-color: #f3f4f6; color: #000; font-weight: bold; font-size: 10px; letter-spacing:1px;";
                         texto = diaSemana === 6 ? "SÁBADO" : "DOMINGO";
                     }
                 } else {
@@ -987,7 +1054,7 @@
                 }
 
                 if (isSpecial) {
-                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; ${estilo}">${texto}</td>`;
+                    tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td colspan="8" style="text-align: center; border-bottom: 1px solid #000; ${estilo}">${texto}</td>`;
                 } else {
                     tr.innerHTML = `<td style="text-align: center; font-weight: bold;">${diaTexto}</td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td><td ${editavel}></td>`;
                 }
@@ -1046,6 +1113,7 @@
                 ['10-12','Nossa Senhora Aparecida'],
                 ['11-02','Finados'],
                 ['11-15','Proclamação da República'],
+                ['11-20','Dia da Consciência Negra'],
                 ['12-25','Natal']
             ].map(([md,n])=>({ date: `${year}-${md}`, nome: n, tipo: 'Nacional' }));
             const easter = easterDate(year);
