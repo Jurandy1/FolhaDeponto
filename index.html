@@ -1,4 +1,4 @@
-<!DOCTYPE html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -430,10 +430,8 @@
                     });
                 }
                 if (appState.currentView === 'ferias') renderFeriasView();
-                if (appState.currentView === 'ponto') {
-                    // Atualiza a multi-seleção no Gerar Ponto
-                    ponto_popularMultiSelect(unicos.slice());
-                }
+                // Popular sempre a lista de multi-seleção (o container existe mesmo oculto)
+                ponto_popularMultiSelect(unicos.slice());
 
                 console.log(`[RH] ${unicos.length} servidores carregados.`);
             } catch (e) {
@@ -508,6 +506,14 @@
                 pontoContainer.classList.remove('hidden');
                 // HACK: Força o re-cálculo de feriados e renderização inicial do ponto
                 ponto_aplicarPorSelect();
+                // Garante que a lista de nomes do lote esteja populada ao entrar
+                try {
+                    const unicos = Array.from(appState.registroPorNome.entries())
+                        .map(([key, r]) => (r['Funcionário'] || r['Funcionario'] || '').trim())
+                        .filter(Boolean)
+                        .sort((a, b) => a.localeCompare(b, 'pt', { sensitivity: 'base' }));
+                    if (unicos.length) ponto_popularMultiSelect(unicos);
+                } catch(e) { /* silencia se ainda não há dados */ }
             } else {
                 content.classList.remove('hidden');
                 pontoContainer.classList.add('hidden');
