@@ -376,6 +376,7 @@
                     <button onclick="switchTab('folha')" id="tab-btn-folha" class="tab-btn px-4 py-2 text-sm font-bold border-b-2 border-blue-600 text-blue-600">Individual</button>
                     <button onclick="switchTab('lote')" id="tab-btn-lote" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Lote</button>
                     <button onclick="switchTab('feriados')" id="tab-btn-feriados" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Feriados</button>
+                    <button onclick="switchTab('gestao')" id="tab-btn-gestao" class="tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 border-b-2 border-transparent">Gestão de Pessoas</button>
                 </div>
                 <div id="tab-folha" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-gray-50 dark:bg-gray-900/50 p-4 rounded">
@@ -409,6 +410,37 @@
                         <div id="holidayListContainer" class="h-64 overflow-y-auto text-sm"></div>
                     </div>
                 </div>
+                <div id="tab-gestao" class="tab-content hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-gray-800 border rounded p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fas fa-users text-gray-500"></i>
+                                <div class="font-bold">Vincular Unidade</div>
+                            </div>
+                            <div class="flex gap-2 mb-3">
+                                <div class="relative flex-1">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                                    <input id="gpFiltroNome" class="pl-9 w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" placeholder="Buscar servidor">
+                                </div>
+                                <input id="gpUnidadeInput" class="w-64 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" placeholder="Unidade Administrativa">
+                                <button id="gpSalvarBtn" class="bg-blue-600 text-white px-3 py-2 rounded text-sm font-bold">Vincular</button>
+                            </div>
+                            <div id="gpPendentesList" class="h-64 overflow-y-auto border rounded p-2 text-sm bg-white dark:bg-gray-800"></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 border rounded p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fas fa-network-wired text-gray-500"></i>
+                                <div class="font-bold">Vinculados</div>
+                            </div>
+                            <div class="flex gap-2 mb-3">
+                                <select id="gpUnidadeSelect" class="border rounded px-2 py-2 text-sm dark:bg-gray-700 dark:text-white"></select>
+                                <input id="gpFiltroVinculados" class="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:text-white" placeholder="Filtrar nome">
+                                <button id="gpGerarFolhasBtn" class="bg-green-600 text-white px-3 py-2 rounded text-sm font-bold">Gerar Folhas</button>
+                            </div>
+                            <div id="gpVinculadosList" class="h-64 overflow-y-auto border rounded p-2 text-sm bg-white dark:bg-gray-800"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- Folha de Ponto Layout A4 -->
@@ -419,6 +451,7 @@
                         <tr><td colspan="2" class="bg-white-header">Secretaria Municipal da Criança e Assistência Social/ SEMCAS</td></tr>
                         <tr><td class="bg-white-cell">Nome: <input id="inpNome" class="input-linha"></td><td class="bg-white-cell">Matrícula: <input id="inpMatricula" class="input-linha" style="width:80px"></td></tr>
                         <tr><td class="bg-white-cell">Cargo: <input id="inpCargo" class="input-linha"></td><td class="bg-white-cell">Vínculo: <input id="inpVinculo" class="input-linha"></td></tr>
+                        <tr><td class="bg-white-cell">Unidade Administrativa: <input id="inpUnidade" class="input-linha"></td><td class="bg-white-cell"></td></tr>
                     </table>
                     <table class="folha-table" style="margin-top: -1px;">
                         <colgroup>
@@ -672,7 +705,8 @@
                 estadual: true,
                 municipal: true,
                 custom: JSON.parse(localStorage.getItem('customHolidays') || '[]')
-            }
+            },
+            unidadesMap: JSON.parse(localStorage.getItem('unidadesMap') || '{}')
         };
         let feriasState = { page: 1, perPage: 25, filterStatus: 'todos' };
 
@@ -704,6 +738,7 @@
             document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));
             document.getElementById(`tab-${t}`).classList.remove('hidden');
             if(t==='feriados') renderHolidayList();
+            if(t==='gestao') renderGestaoPessoas();
         }
 
         function abrirConfiguracoes() {
@@ -1155,6 +1190,8 @@
                  document.getElementById('inpMatricula').value = getField(row, ['matr']);
                  document.getElementById('inpCargo').value = getField(row, ['cargo']);
                  document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
+                 const unidadePersist = app.unidadesMap[nome];
+                 document.getElementById('inpUnidade').value = unidadePersist || (getField(row, ['lotac','unidade']) || '');
              } else document.getElementById('inpNome').value = nome;
              
              app.currentServidor = nome;
@@ -1347,3 +1384,83 @@
     </script>
 </body>
 </html>
+        function renderGestaoPessoas() {
+            const allNames = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario']).trim()).filter(Boolean))).sort();
+            const pendentes = allNames.filter(n => !app.unidadesMap[n]);
+            const pendList = document.getElementById('gpPendentesList');
+            const filtro = document.getElementById('gpFiltroNome');
+            const unidadeInput = document.getElementById('gpUnidadeInput');
+            const btnSalvar = document.getElementById('gpSalvarBtn');
+            const renderPend = () => {
+                const q = (filtro?.value || '').toLowerCase();
+                pendList.innerHTML = pendentes
+                    .filter(n => !q || n.toLowerCase().includes(q))
+                    .map(n => `<label class="flex items-center gap-2 p-1"><input type="checkbox" class="accent-blue-600" value="${n}"><span>${n}</span></label>`)
+                    .join('');
+            };
+            if(filtro) filtro.oninput = renderPend;
+            renderPend();
+            if(btnSalvar) btnSalvar.onclick = () => {
+                const unidade = unidadeInput.value.trim();
+                if(!unidade) return showToast('Informe a unidade', 'error');
+                const checks = Array.from(pendList.querySelectorAll('input[type="checkbox"]:checked'));
+                if(checks.length===0) return showToast('Selecione servidores', 'error');
+                checks.forEach(ch => { app.unidadesMap[ch.value] = unidade; });
+                localStorage.setItem('unidadesMap', JSON.stringify(app.unidadesMap));
+                showToast(`Vinculados: ${checks.length}`, 'success');
+                renderGestaoPessoas();
+            };
+            const unidadeSel = document.getElementById('gpUnidadeSelect');
+            const vincList = document.getElementById('gpVinculadosList');
+            const filtroV = document.getElementById('gpFiltroVinculados');
+            const units = Array.from(new Set(Object.values(app.unidadesMap))).sort();
+            if(unidadeSel) unidadeSel.innerHTML = units.map(u=>`<option value="${u}">${u}</option>`).join('');
+            const renderVinc = () => {
+                const unit = unidadeSel?.value || '';
+                const q = (filtroV?.value || '').toLowerCase();
+                const items = Object.entries(app.unidadesMap)
+                    .filter(([n,u]) => (!unit || u===unit) && (!q || n.toLowerCase().includes(q)))
+                    .sort((a,b) => a[0].localeCompare(b[0]));
+                vincList.innerHTML = items.map(([n,u]) => `<div class="flex justify-between items-center border-b py-1"><div><span class="font-bold">${n}</span> <span class="text-xs">• ${u}</span></div><button class="text-xs px-2 py-1 border rounded hover:bg-gray-50" onclick="unlinkUnidade('${n}')">Desvincular</button></div>`).join('');
+            };
+            if(filtroV) filtroV.oninput = renderVinc;
+            if(unidadeSel) unidadeSel.onchange = renderVinc;
+            renderVinc();
+            const btnGerar = document.getElementById('gpGerarFolhasBtn');
+            if(btnGerar) btnGerar.onclick = () => { const unit = unidadeSel?.value || ''; if(unit) printFolhasUnidade(unit); else showToast('Selecione a unidade', 'error'); };
+        }
+        function unlinkUnidade(nome) {
+            delete app.unidadesMap[nome];
+            localStorage.setItem('unidadesMap', JSON.stringify(app.unidadesMap));
+            renderGestaoPessoas();
+        }
+        function printFolhasUnidade(unit) {
+            const names = Object.entries(app.unidadesMap).filter(([n,u]) => u===unit).map(([n])=>n);
+            if(names.length===0) return showToast('Sem servidores na unidade', 'error');
+            const mm = document.getElementById('mesSelect').value;
+            const aa = document.getElementById('anoSelect').value;
+            const container = document.getElementById('printContainer');
+            container.innerHTML = '';
+            names.forEach(nome => {
+                const row = app.data.find(r => getField(r, ['nome','servidor','funcionar','funcion','funcionario']) === nome);
+                if(row) {
+                    document.getElementById('inpNome').value = nome;
+                    document.getElementById('inpMatricula').value = getField(row, ['matr']);
+                    document.getElementById('inpCargo').value = getField(row, ['cargo']);
+                    document.getElementById('inpVinculo').value = getField(row, ['vinc']) || 'Efetivo';
+                    document.getElementById('inpUnidade').value = app.unidadesMap[nome] || (getField(row, ['lotac','unidade']) || '');
+                } else {
+                    document.getElementById('inpNome').value = nome;
+                    document.getElementById('inpMatricula').value = '';
+                    document.getElementById('inpCargo').value = '';
+                    document.getElementById('inpVinculo').value = '';
+                    document.getElementById('inpUnidade').value = app.unidadesMap[nome] || '';
+                }
+                app.currentServidor = nome;
+                populateDaysTable(document.getElementById('daysTableBody'), mm, aa);
+                const clone = document.getElementById('mainPaper').cloneNode(true);
+                container.appendChild(clone);
+            });
+            container.classList.add('print-active');
+            setTimeout(() => { window.print(); container.classList.remove('print-active'); container.innerHTML=''; }, 200);
+        }
