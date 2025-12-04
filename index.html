@@ -286,7 +286,7 @@
                     <button onclick="abrirModalRegistroFerias()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition shadow flex items-center gap-2">
                         <i class="fas fa-plus-circle"></i> Registrar Férias
                     </button>
-                    <button onclick="carregarFerias()" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition">
+                    <button onclick="carregarFerias(true)" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition" title="Forçar Atualização">
                         <i class="fas fa-sync-alt" id="icon-refresh-ferias"></i>
                     </button>
                 </div>
@@ -630,6 +630,7 @@
             unidadesMap: JSON.parse(localStorage.getItem('unidadesMap') || '{}'),
             loteSelecionados: new Set()
         };
+        let feriasState = { page: 1, perPage: 25, filterStatus: 'todos' };
 
         // --- UTILS ---
         function showToast(msg, type='info') {
@@ -675,9 +676,29 @@
             if(t==='lote') renderLoteList();
         }
 
-        // --- FETCH CSV ---
-        async function fetchCSV() {
-            document.getElementById('status-conexao').innerText = "Conectando...";
+        // --- FETCH CSV COM CACHE ---
+        const CACHE_KEY = 'rh_data_cache';
+        const CACHE_DURATION = 1000 * 60 * 60; // 1 hora
+
+        async function fetchCSV(forceRefresh = false) {
+            document.getElementById('status-conexao').innerText = "Verificando dados...";
+            
+            // Tenta cache primeiro
+            if (!forceRefresh) {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    try {
+                        const { timestamp, data } = JSON.parse(cached);
+                        if (Date.now() - timestamp < CACHE_DURATION) {
+                            document.getElementById('status-conexao').innerText = `Conectado (Cache). ${data.length} registros.`;
+                            document.getElementById('status-conexao').className = "text-sm text-green-600 font-bold";
+                            return data;
+                        }
+                    } catch(e) { console.error("Cache inválido", e); }
+                }
+            }
+
+            document.getElementById('status-conexao').innerText = "Baixando planilha...";
             try {
                 let res;
                 try { res = await fetch(API_URL, {cache:'no-store'}); } 
@@ -694,8 +715,13 @@
                     return row;
                 });
                 
+                // Salva no Cache
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+
                 document.getElementById('status-conexao').innerText = "Conectado. " + data.length + " registros.";
                 document.getElementById('status-conexao').className = "text-sm text-green-600 font-bold";
+                if(forceRefresh) showToast("Dados atualizados com sucesso!", "success");
+                
                 return data;
             } catch(e) { 
                 console.error("Erro planilha:", e);
@@ -763,7 +789,7 @@
             
             const sel = document.getElementById('servidorSelect');
             if(sel) {
-                const names = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario']).trim()).filter(Boolean))).sort();
+                const names = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcion','funcionario','colaborador']).trim()).filter(Boolean))).sort();
                 const currentVal = sel.value;
                 sel.innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
                 if(currentVal && names.includes(currentVal)) sel.value = currentVal;
@@ -782,7 +808,7 @@
 
         // --- GERADOR DE PÁGINA A4 (CORE) ---
         function createPontoPage(nomeServidor, mes, ano) {
-            const row = app.data.find(r => getField(r, ['nome','servidor','funcionar']) === nomeServidor);
+            const row = app.data.find(r => getField(r, ['nome','servidor','funcionar','funcionario']) === nomeServidor);
             const matricula = row ? getField(row, ['matr']) : '';
             const cargo = row ? getField(row, ['cargo']) : '';
             const vinculo = (row ? getField(row, ['vinc']) : '') || 'Efetivo';
@@ -970,9 +996,9 @@
             }, 500);
         }
 
-        // --- LOTE (Refatorado) ---
+        // --- LOTE ---
         function renderLoteList() {
-            const allNames = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar']).trim()).filter(Boolean))).sort();
+            const allNames = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcionario']).trim()).filter(Boolean))).sort();
             const container = document.getElementById('listaLote');
             const filtro = document.getElementById('filtroLote').value.toLowerCase();
             
@@ -1043,7 +1069,7 @@
 
         // --- GESTÃO / VINCULAÇÃO ---
         function renderGestaoPessoas() {
-            const allNames = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar']).trim()).filter(Boolean))).sort();
+            const allNames = Array.from(new Set(app.data.map(r=>getField(r,['nome','servidor','funcionar','funcionario']).trim()).filter(Boolean))).sort();
             
             // Pendentes
             const pendentes = allNames.filter(n => !app.unidadesMap[n]);
@@ -1209,19 +1235,145 @@
             return false;
         }
 
-        // --- FÉRIAS (Lógica Básica Mantida) ---
-        function carregarFerias() { fetchCSV().then(d => { app.data = d; renderTabelaFerias(); }); }
-        function renderTabelaFerias() {
-             const tbody = document.getElementById('tabela-ferias-body');
-             tbody.innerHTML = '';
-             const filtro = document.getElementById('filtroFerias').value.toLowerCase();
-             app.data.filter(r => getField(r,['nome','servidor']).toLowerCase().includes(filtro)).slice(0, 50).forEach(item => {
-                 const nome = getField(item,['nome','servidor']);
-                 tbody.innerHTML += `<tr class="border-b dark:border-gray-700"><td class="p-3">${nome}</td></tr>`;
-             });
+        // --- FÉRIAS COMPLETO ---
+        async function carregarFerias(force = false) { 
+            if(!app.data.length || force) app.data = await fetchCSV(force); 
+            feriasState.page = 1;
+            renderTabelaFerias(); 
         }
-        // Funções de Modal de Férias seriam restauradas aqui da versão original
-        // ...
+
+        function calcularSaldo(nome, admissaoStr) {
+            if(!admissaoStr) return { saldo: 0, status: 'indefinido', limite: null };
+            // Tenta varios formatos de data
+            let admissao;
+            if(admissaoStr.includes('/')) {
+                const parts = admissaoStr.split('/');
+                if(parts.length===3) admissao = new Date(parts[2].length===2?'20'+parts[2]:parts[2], parts[1]-1, parts[0]);
+            } else {
+                admissao = new Date(admissaoStr);
+            }
+            if(!admissao || isNaN(admissao.getTime())) return { saldo: 0, status: 'indefinido' };
+
+            const hoje = new Date();
+            let anos = hoje.getFullYear() - admissao.getFullYear();
+            const aniv = new Date(hoje.getFullYear(), admissao.getMonth(), admissao.getDate());
+            if(hoje < aniv) anos--;
+            const fimPeriodo = new Date(admissao); fimPeriodo.setFullYear(fimPeriodo.getFullYear() + anos);
+            const limite = new Date(fimPeriodo); limite.setFullYear(limite.getFullYear()+1);
+            
+            const tiradas = app.feriasLancadas.filter(f => f.nome === nome).reduce((acc, cur) => acc + parseInt(cur.dias), 0);
+            // Lógica simplificada de saldo (considerando apenas último período completo)
+            const saldo = 30 - (tiradas % 30);
+            const diasRestantes = Math.ceil((limite - hoje)/(1000*60*60*24));
+            
+            let status = 'emdia';
+            if(diasRestantes < 0) status = 'vencida';
+            else if(diasRestantes < 60) status = 'critico';
+            else if(diasRestantes < 90) status = 'atencao';
+            return { saldo, status, limite, diasRestantes };
+        }
+
+        function renderTabelaFerias() {
+            const tbody = document.getElementById('tabela-ferias-body');
+            tbody.innerHTML = '';
+            const filtroStatus = document.getElementById('filtroStatusFerias').value;
+            const filtroNome = document.getElementById('filtroFerias').value.toLowerCase();
+            
+            let lista = app.data.map(r => {
+                const nome = getField(r, ['nome','servidor','funcionar','funcionario','colaborador']);
+                const admissao = getField(r, ['admiss','data']);
+                const lotacao = getField(r, ['lotac','unidade']) || 'SEMCAS';
+                const calc = calcularSaldo(nome, admissao);
+                return { nome, lotacao, ...calc };
+            }).filter(i => i.nome); // Remove linhas vazias
+
+            // Filtros
+            lista = lista.filter(i => {
+                if(filtroNome && !i.nome.toLowerCase().includes(filtroNome)) return false;
+                if(filtroStatus !== 'todos' && i.status !== filtroStatus) return false;
+                return true;
+            });
+
+            // Paginação
+            const total = lista.length;
+            const per = feriasState.perPage;
+            const pages = Math.max(1, Math.ceil(total / per));
+            if(feriasState.page > pages) feriasState.page = pages;
+            const start = (feriasState.page - 1) * per;
+            const sliced = lista.slice(start, start + per);
+            const pageInfo = document.getElementById('feriasPageInfo');
+            if(pageInfo) pageInfo.innerText = `Página ${feriasState.page} de ${pages} • ${total} registros`;
+
+            sliced.forEach(item => {
+                let badge = '';
+                if(item.status==='vencida') badge = '<span class="px-2 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold">VENCIDA</span>';
+                else if(item.status==='critico') badge = '<span class="px-2 py-1 rounded-full bg-orange-100 text-orange-800 text-xs font-bold">CRÍTICO</span>';
+                else if(item.status==='atencao') badge = '<span class="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-bold">ATENÇÃO</span>';
+                else badge = '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold">EM DIA</span>';
+
+                const checked = app.selectedFerias.has(item.nome) ? 'checked' : '';
+                const limiteFmt = item.limite && !isNaN(item.limite) ? item.limite.toLocaleDateString('pt-BR') : '-';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b dark:border-gray-700">
+                        <td class="px-4 py-3 text-center"><input type="checkbox" value="${item.nome}" class="accent-blue-600 w-4 h-4 cursor-pointer" onclick="toggleFeriasSelection('${item.nome}')" ${checked}></td>
+                        <td class="px-4 py-3 font-medium dark:text-gray-200">${item.nome}</td>
+                        <td class="px-4 py-3 text-gray-500 hidden md:table-cell dark:text-gray-400">${item.lotacao}</td>
+                        <td class="px-4 py-3 text-gray-700 dark:text-gray-300 font-bold">${limiteFmt}</td>
+                        <td class="px-4 py-3 text-center font-bold text-blue-600 dark:text-blue-400">${item.saldo} dias</td>
+                        <td class="px-4 py-3 text-center">${badge}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="gerarDocumentoFerias('${item.nome}')" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs font-bold border border-blue-200 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-gray-700 transition"><i class="fas fa-file-contract"></i> Aviso</button>
+                        </td>
+                    </tr>`;
+            });
+            updateBatchUI();
+        }
+
+        // Funções Auxiliares de Férias
+        function feriasPrev() { if(feriasState.page > 1) { feriasState.page--; renderTabelaFerias(); } }
+        function feriasNext() { feriasState.page++; renderTabelaFerias(); }
+        
+        function toggleAllFerias(master) {
+            document.querySelectorAll('#tabela-ferias-body input[type="checkbox"]').forEach(b => {
+                b.checked = master.checked;
+                master.checked ? app.selectedFerias.add(b.value) : app.selectedFerias.delete(b.value);
+            });
+            updateBatchUI();
+        }
+        function toggleFeriasSelection(nome) {
+            app.selectedFerias.has(nome) ? app.selectedFerias.delete(nome) : app.selectedFerias.add(nome);
+            updateBatchUI();
+        }
+        function updateBatchUI() {
+            const count = app.selectedFerias.size;
+            document.getElementById('batch-actions').style.display = count > 0 ? 'flex' : 'none';
+            document.getElementById('batch-count').innerText = `${count} selecionado(s)`;
+        }
+        function limparSelecaoFerias() { app.selectedFerias.clear(); renderTabelaFerias(); }
+        
+        // --- GERAR DOC FERIAS ---
+        function gerarDocumentoFerias(nome) {
+            const row = app.data.find(r => getField(r, ['nome','servidor','funcionar','funcionario']) === nome);
+            const calc = calcularSaldo(nome, getField(row, ['admiss']));
+            const ultimaFerias = app.feriasLancadas.filter(f => f.nome === nome).pop();
+            let inicio = new Date(), dias = 30;
+            if(ultimaFerias) { inicio = new Date(ultimaFerias.inicio); dias = ultimaFerias.dias; }
+            
+            const fim = new Date(inicio); fim.setDate(fim.getDate() + dias - 1);
+            
+            document.getElementById('docNome').innerText = nome;
+            document.getElementById('docMatricula').innerText = getField(row, ['matr'])||'---';
+            document.getElementById('docLotacao').innerText = getField(row, ['lotac','unidade'])||'SEMCAS';
+            document.getElementById('docPeriodoAquisitivo').innerText = calc.limite ? `${calc.limite.getFullYear()-1}/${calc.limite.getFullYear()}` : '2024/2025';
+            document.getElementById('docDataInicio').innerText = inicio.toLocaleDateString('pt-BR');
+            document.getElementById('docDataFim').innerText = fim.toLocaleDateString('pt-BR');
+            document.getElementById('docDias').innerText = dias;
+            
+            const pc = document.getElementById('ferias-print-container');
+            pc.classList.add('print-active');
+            setTimeout(() => { window.print(); pc.classList.remove('print-active'); }, 200);
+        }
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
