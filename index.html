@@ -69,7 +69,7 @@
             min-height: 297mm;
             background: var(--bg-paper);
             color: var(--color-text-paper);
-            padding: 10mm 15mm; /* Margens ajustadas para caber mais conteúdo se necessário */
+            padding: 10mm 15mm; /* Margens ajustadas */
             box-sizing: border-box;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             margin: 0 auto;
@@ -89,7 +89,7 @@
         .folha-table td, .folha-table th {
             border: 1px solid var(--border-paper);
             padding: 1px 2px;
-            font-size: 10px; /* Fonte levemente menor para garantir que caiba */
+            font-size: 10px;
             vertical-align: middle;
             color: var(--color-text-paper);
             overflow: hidden;
@@ -123,6 +123,9 @@
         .bg-gray-folha { background-color: #e5e7eb !important; font-weight: bold; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .bg-white-header { background-color: #fff !important; font-weight: bold; text-align: center; }
         .bg-white-cell { background-color: #fff !important; padding-left: 4px !important; }
+        
+        /* Estilo Cinza para Sábado/Domingo/Feriado */
+        .bg-gray-dark { background-color: #d1d5db !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
         /* --- TOAST --- */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
@@ -162,7 +165,7 @@
                 break-after: page;
                 position: relative;
             }
-            /* Remove a quebra da última página para evitar folha em branco extra */
+            /* Remove a quebra da última página */
             .page:last-child { page-break-after: auto; }
             
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -272,7 +275,6 @@
 
         <!-- FÉRIAS ROBUSTAS -->
         <div id="ferias-view" class="view-section hidden">
-            <!-- (Conteúdo de férias mantido, mas ocultado para focar na folha de ponto) -->
              <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border dark:border-gray-700 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -342,17 +344,7 @@
             </div>
         </div>
 
-        <!-- PROCESSOS E NOTICIAS (Placeholders) -->
-        <div id="processos-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Processos SEI</h2>
-            <p class="text-gray-500">Módulo em desenvolvimento.</p>
-        </div>
-        <div id="noticias-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
-             <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Notícias</h2>
-             <p class="text-gray-500">Módulo em desenvolvimento.</p>
-        </div>
-
-        <!-- PONTO (Reformulado e Otimizado) -->
+        <!-- PONTO -->
         <div id="ponto-container" class="view-section hidden pb-20">
             <div id="ponto-controls" class="no-print bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6 sticky top-20 z-40">
                 
@@ -494,7 +486,17 @@
             <div id="printContainer" class="hidden"></div>
         </div>
 
-        <!-- MODAIS MANTIDOS (FÉRIAS, CONFIG, HISTÓRICO...) -->
+        <!-- OUTROS MÓDULOS -->
+        <div id="processos-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Processos SEI</h2>
+            <p class="text-gray-500">Módulo em desenvolvimento.</p>
+        </div>
+        <div id="noticias-view" class="view-section hidden bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
+             <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-white">Notícias</h2>
+             <p class="text-gray-500">Módulo em desenvolvimento.</p>
+        </div>
+
+        <!-- MODAIS -->
         <div id="modalFerias" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
              <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md p-6 shadow-2xl border dark:border-gray-600">
                     <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-white border-b pb-2">Registrar Férias</h3>
@@ -779,7 +781,6 @@
         }
 
         // --- GERADOR DE PÁGINA A4 (CORE) ---
-        // Esta função cria um elemento DOM representando a página, sem inseri-lo ainda.
         function createPontoPage(nomeServidor, mes, ano) {
             const row = app.data.find(r => getField(r, ['nome','servidor','funcionar']) === nomeServidor);
             const matricula = row ? getField(row, ['matr']) : '';
@@ -788,7 +789,11 @@
             const unidade = app.unidadesMap[nomeServidor] || (row ? getField(row, ['lotac','unidade']) : '') || 'SEMCAS';
             
             const diasNoMes = new Date(ano, Number(mes), 0).getDate();
-            const feriadosSet = new Set(getHolidayISOList(parseInt(ano)).map(h=>h.date));
+            
+            // Cria Mapa de Feriados para buscar pelo nome
+            const feriadosMap = new Map();
+            getHolidayISOList(parseInt(ano)).forEach(h => feriadosMap.set(h.date, h.nome));
+
             const mesNome = document.getElementById('mesSelect').options[Number(mes)-1].text.toUpperCase();
 
             // Cria o wrapper da página
@@ -847,18 +852,19 @@
                     const data = new Date(ano, Number(mes)-1, i);
                     const diaSemana = data.getDay();
                     const keyIso = `${ano}-${String(mes).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                    const isFeriado = feriadosSet.has(keyIso);
+                    const nomeFeriado = feriadosMap.get(keyIso); // Pega nome do feriado
                     const isVacation = isVacationDay(nomeServidor, keyIso);
                     
-                    if (isFeriado) {
-                        conteudo = `<td colspan="8" style="text-align: center; background-color: #ffe4e6; font-weight: bold; font-size: 9px; letter-spacing: 1px;">FERIADO</td>`;
+                    if (nomeFeriado) {
+                        conteudo = `<td colspan="8" style="text-align: center; background-color: #ffe4e6; font-weight: bold; font-size: 9px; letter-spacing: 1px;">${nomeFeriado.toUpperCase()}</td>`;
                     } else if (isVacation) {
                         conteudo = `<td colspan="8" style="text-align: center; background-color: #fef3c7; font-weight: bold; font-size: 9px; letter-spacing: 1px;">FÉRIAS</td>`;
                     } else if (diaSemana === 0 || diaSemana === 6) {
                         const label = diaSemana === 0 ? 'DOMINGO' : 'SÁBADO';
-                        conteudo = `<td colspan="8" style="text-align: center; background-color: #f3f4f6; font-weight: bold; font-size: 9px; letter-spacing: 1px;">${label}</td>`;
+                        // Mescla colunas (colspan=8) e aplica fundo cinza mais escuro (bg-gray-dark)
+                        conteudo = `<td colspan="8" class="bg-gray-dark" style="text-align: center; font-weight: bold; font-size: 9px; letter-spacing: 1px;">${label}</td>`;
                     } else {
-                        // Dia útil normal - Células editáveis e com classe para busca
+                        // Dia útil normal - Células editáveis
                         const editable = 'contenteditable="true" class="cell-time hover:bg-blue-50 focus:bg-blue-100 outline-none cursor-text"';
                         conteudo = `
                             <td ${editable} data-type="e1"></td><td></td>
@@ -1204,14 +1210,11 @@
         }
 
         // --- FÉRIAS (Lógica Básica Mantida) ---
-        // (Funções de tabela de férias, cálculo de saldo, etc. mantidas simplificadas aqui)
         function carregarFerias() { fetchCSV().then(d => { app.data = d; renderTabelaFerias(); }); }
         function renderTabelaFerias() {
              const tbody = document.getElementById('tabela-ferias-body');
              tbody.innerHTML = '';
              const filtro = document.getElementById('filtroFerias').value.toLowerCase();
-             // (Lógica completa de férias estaria aqui, similar à versão original)
-             // Para brevidade, mostra apenas filtrados
              app.data.filter(r => getField(r,['nome','servidor']).toLowerCase().includes(filtro)).slice(0, 50).forEach(item => {
                  const nome = getField(item,['nome','servidor']);
                  tbody.innerHTML += `<tr class="border-b dark:border-gray-700"><td class="p-3">${nome}</td></tr>`;
